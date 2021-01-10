@@ -60,6 +60,18 @@ bool Parser::parsePia(vector<uint8_t> raw) {
 
 	vector<uint8_t>::iterator iter = raw.begin() + 5;
 	iter = header.fill(iter);
+
+	//The encrypted packet without unencrypted header
+	vector<uint8_t> enc;
+	while (iter < raw.end())
+		enc.push_back(*iter++);
+	//enc.push_back(*iter); //fencepost- add last value;
+
+	vector<uint8_t> dec;
+	DecryptPia(enc, &dec);
+	
+	
+	
 	return true;
 }
 
@@ -91,7 +103,7 @@ bool Parser::parseBrowseReply() {
 	return true;
 }
 
-void Parser::setSessionKey(uint8_t mod_param[]) //creates hash of the given array and sets session key to it
+void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the given array and sets session key to it
 {
 	HMAC_CTX* ctx = HMAC_CTX_new();
 	unsigned int hmac_len;
@@ -106,6 +118,45 @@ void Parser::setSessionKey(uint8_t mod_param[]) //creates hash of the given arra
 		sessionKey[i] = session_key_ext[i];
 	}
 	decryptable = true;
+}
+
+bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t> *decrypted) {
+	
+	//If this bit is set the packet isn't encrypted
+	if (header.version >> 7 == 0)
+		return true;
+	else if (!decryptable)
+		return false; //Cannot decrypt if sessionKey isn't set
+
+	uint8_t nonce[12];
+
+	//Set the nonce with the source ip and nonce counter
+	for (int i = 0; i < 4; i++)
+		nonce[i] = (udpInfo.srcIP >> (24 - i * 8) & 0xFF);
+	nonce[4] = header.connID;
+	for (int i = 1; i < 8; i++) {
+		nonce[i + 4] = header.nonceCounter[i];
+	}
+
+	int decrypted_len;
+	decrypted->resize(encrypted.size(), 0);
+
+	//Start decryption
+	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
+	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), nonce);
+	EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size());
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, header.tag.data());
+
+
+	if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) == 0) {
+		EVP_CIPHER_CTX_free(ctx);
+		return false;
+	}
+
+	EVP_CIPHER_CTX_free(ctx);
+	return true;
+
 }
 
 void Parser::resetAll() {

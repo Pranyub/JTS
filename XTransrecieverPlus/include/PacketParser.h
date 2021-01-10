@@ -59,9 +59,10 @@ public:
 private:
 
 	bool parsePia(std::vector<uint8_t> raw);
-	bool DecryptPia();
+	//decrypts a given packet with sessionKey
+	bool DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t>* decrypted);
 	bool parseBrowseReply();
-	void setSessionKey(uint8_t mod_param[]);
+	void setSessionKey(const uint8_t mod_param[]);
 	//empty structs that can be used for resetting
 	const UDPData udpInfoReset;
 	const PIAHeader headerReset;
