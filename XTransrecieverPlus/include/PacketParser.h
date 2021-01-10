@@ -10,6 +10,10 @@ public:
 		BROWSE_REPLY = 1
 	};
 
+	enum STAGE {
+		HANDSHAKE = 1
+	};
+
 	struct UDPData {
 		int srcIP = 0;
 		int dstIP = 0;
@@ -34,7 +38,7 @@ public:
 
 	struct Message {
 		//header data
-		uint8_t field_flag = 0;
+		uint8_t field_flags = 0;
 		uint8_t msg_flag = 0;
 		uint16_t payload_size = 0;
 		uint8_t protocol_type = 0;
@@ -43,6 +47,8 @@ public:
 		uint64_t source_station_id = 0;
 
 		std::vector<uint8_t> payload;
+		//parses a PIA Message from a raw input
+		int setMessage(std::vector<uint8_t> data);
 	} message;
 
 	const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption

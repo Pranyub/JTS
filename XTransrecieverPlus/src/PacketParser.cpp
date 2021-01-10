@@ -65,23 +65,55 @@ bool Parser::parsePia(vector<uint8_t> raw) {
 	vector<uint8_t> enc;
 	while (iter < raw.end())
 		enc.push_back(*iter++);
-	//enc.push_back(*iter); //fencepost- add last value;
+
 
 	vector<uint8_t> dec;
-	DecryptPia(enc, &dec);
-	
-	
+	if(DecryptPia(enc, &dec))
+		message.setMessage(dec);
 	
 	return true;
 }
 
-std::vector<uint8_t>::iterator Parser::PIAHeader::fill(std::vector<uint8_t>::iterator iter) {
+vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter) {
 	connID = *iter++;
 	packetID = convertType(iter, 2); iter += 2;
 	copy(iter, iter + 8, nonceCounter.data()); iter += 8;
 	copy(iter, iter + 16, tag.data()); iter += 16;
 
 	return iter;
+}
+
+int Parser::Message::setMessage(vector<uint8_t> data) {
+	vector<uint8_t>::iterator iter = data.begin();
+	
+	
+	field_flags = *iter++;
+	//set all message header values according to the field flags
+	if (field_flags & 1)
+		msg_flag = *iter++;
+	if (field_flags & 2) {
+		payload_size = convertType(iter, 2);
+		iter += 2;
+	}
+	if (field_flags & 4) {
+		protocol_type = *iter++;
+		copy(iter, iter + 3, protocol_port);
+		iter += 3;
+	}
+	if (field_flags & 8) {
+		destination = convertType(iter, 8);
+		iter += 8;
+	}
+	if (field_flags & 16) {
+		source_station_id = convertType(iter, 8);
+		iter += 8;
+	}
+
+	payload.resize(payload_size);
+	for (int i = 0; i < payload_size; i++)
+		payload.push_back(*iter++);
+
+	return iter - data.begin();
 }
 
 bool Parser::parseBrowseReply() {
