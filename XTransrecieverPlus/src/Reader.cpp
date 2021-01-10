@@ -9,7 +9,7 @@ using namespace std;
 using namespace pcpp;
 
 void Reader::Start(string file) {
-	IFileReaderDevice* reader = IFileReaderDevice::getReader(("./packets/" + file).c_str());
+	IFileReaderDevice* reader = IFileReaderDevice::getReader(file.c_str());
 
 	// verify that a reader interface was created
 	if (reader == NULL)
@@ -19,7 +19,7 @@ void Reader::Start(string file) {
 	}
 	if (!reader->open())
 	{
-		printf("Cannot open input.pcap for reading\n");
+		printf("Cannot open file for reading\n");
 		exit(1);
 	}
 
@@ -34,7 +34,7 @@ void Reader::Start(string file) {
 	{
 		packet = Packet(&rawPacket);
 
-		parser.OnPacket(packet);
+		parser.onPacket(packet);
 
 		count++;
 	}

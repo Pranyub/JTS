@@ -10,6 +10,9 @@
     <ClCompile Include="src\PacketParser.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Util.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="header">
@@ -27,6 +30,9 @@
       <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="include\PacketParser.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Util.h">
       <Filter>header</Filter>
     </ClInclude>
   </ItemGroup>
