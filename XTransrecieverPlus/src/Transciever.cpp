@@ -18,6 +18,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Packet packet = Packet(rawPacket);
 	Parser* parser = &cookie->parser;
 
+	parser->onPacket(packet);
 }
 
 

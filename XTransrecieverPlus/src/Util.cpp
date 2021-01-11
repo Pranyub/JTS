@@ -11,3 +11,13 @@ uint64_t util::convertType(vector<uint8_t>::iterator iter, int size) {
 
 	return out;
 }
+
+void util::HexToVector(const string hex, vector<uint8_t> *in) {
+
+	
+	for (unsigned int i = 0; i < hex.length(); i += 2) {
+		string byteString = hex.substr(i, 2);
+		uint8_t byte = (uint8_t)strtol(byteString.c_str(), nullptr, 16);
+		in->push_back(byte);
+	}
+}
