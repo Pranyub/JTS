@@ -12,15 +12,6 @@ uint64_t util::convertType(vector<uint8_t>::iterator iter, int size) {
 	return out;
 }
 
-uint64_t util::convertType(array<uint8_t, 2048>::iterator iter, int size) {
-	uint64_t out = 0;
-	for (int i = size - 1; i >= 0; i--) {
-		out += (uint64_t)*iter++ << (8 * i);
-	}
-
-	return out;
-}
-
 void util::HexToVector(const string hex, vector<uint8_t> *in) {
 
 	

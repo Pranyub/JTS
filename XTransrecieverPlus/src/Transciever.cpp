@@ -15,11 +15,12 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 {
 	Tx::Cookie* cookie = (Tx::Cookie*)c;
 	Packet packet = Packet(rawPacket);
-	Parser* parser = cookie->parser;
+	Parser* parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
 
 	Packet out;
 	if (parser->onPacket(packet)) {
+		printf("GOT PACKET!\n");
 		if (responder->getResp(&out))
 			dev->sendPacket(&out);
 	}

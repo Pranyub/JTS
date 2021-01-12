@@ -5,7 +5,7 @@
 class Tx {
 public:
 	struct Cookie {
-		Parser *parser;
+		Parser parser;
 		Responder responder;
 		Cookie() {};
 	};
