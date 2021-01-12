@@ -14,7 +14,7 @@ using namespace util;
 
 bool Parser::onPacket(Packet packet) {
 	
-	resetAll();
+	//resetAll();
 
 	UdpLayer* udpLayer = packet.getLayerOfType<UdpLayer>();
 	IPv4Layer* ipv4Layer = packet.getLayerOfType<IPv4Layer>();
@@ -22,8 +22,11 @@ bool Parser::onPacket(Packet packet) {
 	
 	if (udpLayer == nullptr || payloadLayer == nullptr || ipv4Layer == nullptr)
 		return false;
-
-	udpInfo.message_len = payloadLayer->getPayloadLen();
+	if (payloadLayer->getPayloadLen()) {
+		cout << udpInfo.message_len;
+		exit(1);
+	}
+	
 	uint8_t* message_pointer = payloadLayer->getData();
 
 	udpInfo.srcIP = ntohl(ipv4Layer->getSrcIpAddress().toInt());
@@ -34,7 +37,6 @@ bool Parser::onPacket(Packet packet) {
 	printf("len: %d", udpInfo.message_len);
 
 	//Initialize raw with the payload data
-	raw = vector<uint8_t>(udpInfo.message_len, 0); //doing raw.resize() crashes for some reason
 	for (int i = 0; i < udpInfo.message_len; i++) {
 		raw[i] = *(message_pointer + i);
 	}
@@ -46,7 +48,7 @@ bool Parser::onPacket(Packet packet) {
 		break;
 	case BROWSE_REQUEST:
 		message.payload = raw;
-		message.payload_size = raw.size();
+		message.payload_size = udpInfo.message_len;
 		break;
 	case BROWSE_REPLY:
 		parseBrowseReply(); //Used to get session key (used for encryption/decryption)
@@ -55,15 +57,14 @@ bool Parser::onPacket(Packet packet) {
 	}
 	return true;
 }
-
-bool Parser::parsePia(vector<uint8_t> raw) {
+bool Parser::parsePia(std::array<uint8_t, 2048> raw) {
 	//Check if header matches
 	for (int i = 0x00; i < 0x04; i++) {
 		if (raw[i] != header.magic[i])
 			return false;
 	}
 
-	vector<uint8_t>::iterator iter = raw.begin() + 5;
+	array<uint8_t, 2048>::iterator iter = raw.begin() + 5;
 	iter = header.fill(iter);
 
 	//The encrypted packet without unencrypted header
@@ -79,7 +80,7 @@ bool Parser::parsePia(vector<uint8_t> raw) {
 	return true;
 }
 
-vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter) {
+array<uint8_t, 2048>::iterator Parser::PIAHeader::fill(array<uint8_t, 2048>::iterator iter) {
 	connID = *iter++;
 	packetID = convertType(iter, 2); iter += 2;
 	copy(iter, iter + 8, nonceCounter.data()); iter += 8;
@@ -114,9 +115,9 @@ int Parser::Message::setMessage(vector<uint8_t> data) {
 		iter += 8;
 	}
 
-	payload.resize(payload_size);
+	payload.fill(0);
 	for (int i = 0; i < payload_size; i++)
-		payload.push_back(*iter++);
+		payload[i] = *iter++;
 
 	return iter - data.begin();
 }
@@ -197,8 +198,8 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 }
 
 void Parser::resetAll() {
-	raw.resize(1);
-	udpInfo = udpInfoReset;
-	header = headerReset;
-	message = messageReset;
+//	raw.fill(0);
+	//udpInfo = udpInfoReset;
+	//header = headerReset;
+	//message = messageReset;
 }
