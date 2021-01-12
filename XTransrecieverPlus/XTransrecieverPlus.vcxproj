@@ -20,21 +20,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\PacketCrafter.cpp" />
     <ClCompile Include="src\PacketParser.cpp" />
     <ClCompile Include="src\Reader.cpp" />
+    <ClCompile Include="src\Responder.cpp" />
+    <ClCompile Include="src\Transciever.cpp" />
     <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Config.h" />
+    <ClInclude Include="include\PacketCrafter.h" />
     <ClInclude Include="include\PacketParser.h" />
     <ClInclude Include="include\Reader.h" />
+    <ClInclude Include="include\Responder.h" />
+    <ClInclude Include="include\Transciever.h" />
     <ClInclude Include="include\Util.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{48A388AF-9D6D-48BC-9CBE-7D7F04B5C73C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Xtransreciever3</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -138,6 +144,8 @@
       <PreprocessorDefinitions>WINx64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>.\include\;C:\Program Files\OpenSSL-Win64\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

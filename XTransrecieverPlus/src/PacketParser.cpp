@@ -23,17 +23,20 @@ bool Parser::onPacket(Packet packet) {
 	if (udpLayer == nullptr || payloadLayer == nullptr || ipv4Layer == nullptr)
 		return false;
 
+	udpInfo.message_len = payloadLayer->getPayloadLen();
+	uint8_t* message_pointer = payloadLayer->getData();
+
 	udpInfo.srcIP = ntohl(ipv4Layer->getSrcIpAddress().toInt());
 	udpInfo.dstIP = ntohl(ipv4Layer->getDstIpAddress().toInt());
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
 	udpInfo.dstPort = (int)udpLayer->getUdpHeader()->portDst;
-
-	udpInfo.message_len = payloadLayer->getPayloadLen();
-	uint8_t* message_pointer = payloadLayer->getData();
 	
+	printf("len: %d", udpInfo.message_len);
+
 	//Initialize raw with the payload data
+	raw = vector<uint8_t>(udpInfo.message_len, 0); //doing raw.resize() crashes for some reason
 	for (int i = 0; i < udpInfo.message_len; i++) {
-		raw.push_back(*(message_pointer + i)); 
+		raw[i] = *(message_pointer + i);
 	}
 
 	switch (raw[0])
@@ -42,6 +45,8 @@ bool Parser::onPacket(Packet packet) {
 		parsePia(raw);
 		break;
 	case BROWSE_REQUEST:
+		message.payload = raw;
+		message.payload_size = raw.size();
 		break;
 	case BROWSE_REPLY:
 		parseBrowseReply(); //Used to get session key (used for encryption/decryption)
@@ -192,7 +197,7 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 }
 
 void Parser::resetAll() {
-	raw.clear();
+	raw.resize(1);
 	udpInfo = udpInfoReset;
 	header = headerReset;
 	message = messageReset;

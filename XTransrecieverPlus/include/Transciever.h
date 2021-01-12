@@ -1,9 +1,13 @@
 #pragma once
 #include "PacketParser.h"
+#include "Responder.h"
+#include <PcapLiveDeviceList.h>
 class Tx {
 public:
 	struct Cookie {
-		Parser parser;
+		Parser *parser;
+		Responder responder;
+		Cookie() {};
 	};
 
 	pcpp::PcapLiveDevice* dev;

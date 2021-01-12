@@ -13,6 +13,15 @@
     <ClCompile Include="src\Util.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Transciever.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PacketCrafter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Responder.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="header">
@@ -33,6 +42,15 @@
       <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="include\Util.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Transciever.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PacketCrafter.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Responder.h">
       <Filter>header</Filter>
     </ClInclude>
   </ItemGroup>

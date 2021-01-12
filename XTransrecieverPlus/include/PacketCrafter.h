@@ -1,7 +1,6 @@
 #include "PacketParser.h"
 #include <Packet.h>
-class Crafter {
-public:
+namespace crft {
 
 	struct PiaPacket {
 		int protocolType = 0;
@@ -12,9 +11,9 @@ public:
 		PiaPacket(Parser* parserIn) {
 			parser = parserIn;
 		}
-
-	private:
-		pcpp::Packet craftPacket(int srcPort, int dstPort, int dstIP=0);
+		PiaPacket() {}
+	protected:
+		pcpp::Packet craftPacket(std::vector<uint8_t> data, int srcPort, int dstPort, int dstIP = 0x0a0000ff /*broadcast by default*/);
 	};
 
 	struct Lan : public PiaPacket {
@@ -33,7 +32,7 @@ public:
 		Lan(Parser *parserIn) : PiaPacket(parserIn) {
 			protocolType = 0x44;
 		}
-
+		Lan() {}
 		pcpp::Packet craftBrowseReq();
 
 	};

@@ -1,5 +1,4 @@
 #include "Transciever.h"
-#include <PcapLiveDeviceList.h>
 #include <PcapFilter.h>
 #include <Layer.h>
 #include <EthLayer.h>
@@ -16,9 +15,14 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 {
 	Tx::Cookie* cookie = (Tx::Cookie*)c;
 	Packet packet = Packet(rawPacket);
-	Parser* parser = &cookie->parser;
+	Parser* parser = cookie->parser;
+	Responder* responder = &cookie->responder;
 
-	parser->onPacket(packet);
+	Packet out;
+	if (parser->onPacket(packet)) {
+		if (responder->getResp(&out))
+			dev->sendPacket(&out);
+	}
 }
 
 
@@ -43,6 +47,6 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 		exit(1);
 	}
 	Cookie cookie;
-
+	cookie.responder.setParser(cookie.parser);
 	dev->startCapture(onPacket, &cookie);
 }

@@ -10,9 +10,9 @@ public:
 		BROWSE_REPLY = 1
 	};
 
-	enum STAGE {
-		HANDSHAKE = 1
-	};
+	Parser() {};
+
+	int test = 4;
 
 	struct UDPData {
 		int srcIP = 0;
