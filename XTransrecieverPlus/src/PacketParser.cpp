@@ -30,21 +30,22 @@ bool Parser::onPacket(Packet packet) {
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
 	udpInfo.dstPort = (int)udpLayer->getUdpHeader()->portDst;
 	
-	printf("len: %d\n", udpInfo.message_len);
-
 	//Initialize raw with the payload data
-	raw.resize(udpInfo.message_len);
+	raw = new vector<uint8_t>;
 	for (int i = 0; i < udpInfo.message_len; i++) {
-		raw[i] = *(message_pointer + i);
+		int a = *(message_pointer + i);
+	}
+	for (int i = 0; i < udpInfo.message_len; i++) {
+		raw->push_back(*(message_pointer + i));
 	}
 
-	switch (raw[0])
+	switch (raw->at(0))
 	{
 	case PIA_MSG:
-		parsePia(raw);
+		parsePia(*raw);
 		break;
 	case BROWSE_REQUEST:
-		message.payload = raw;
+		message.payload.assign(raw->begin(), raw->end());
 		message.payload_size = udpInfo.message_len;
 		break;
 	case BROWSE_REPLY:
@@ -52,22 +53,24 @@ bool Parser::onPacket(Packet packet) {
 		printf("Browse Reply from %x\n", udpInfo.srcIP);
 		break;
 	}
+	delete(raw);
+	raw = nullptr;
 	return true;
 }
 
-bool Parser::parsePia(std::vector<uint8_t> raw) {
+bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 	//Check if header matches
 	for (int i = 0x00; i < 0x04; i++) {
-		if (raw[i] != header.magic[i])
+		if (piaMsg[i] != header.magic[i])
 			return false;
 	}
 
-	vector<uint8_t>::iterator iter = raw.begin() + 5;
+	vector<uint8_t>::iterator iter = piaMsg.begin() + 5;
 	iter = header.fill(iter);
 
 	//The encrypted packet without unencrypted header
 	vector<uint8_t> enc;
-	while (iter < raw.end())
+	while (iter < piaMsg.end())
 		enc.push_back(*iter++);
 
 
@@ -127,14 +130,14 @@ bool Parser::parseBrowseReply() {
 
 	uint8_t session_param[32];
 	for (int i = 0; i < 32; i++) {
-		session_param[i] = raw[i + 1270];
+		session_param[i] = raw->at(i + 1270);
 	}
 	session_param[31] += 1;
 	
 	setSessionKey(session_param); //This is all we care about
 
 	for (int i = 0; i < 4; i++) {
-		sessionID[i] = raw[i + 9];
+		sessionID[i] = raw->at(i + 9);
 	}
 	return true;
 }
@@ -196,7 +199,6 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 }
 
 void Parser::resetAll() {
-	raw.clear();
 	udpInfo = udpInfoReset;
 	header = headerReset;
 	message = messageReset;

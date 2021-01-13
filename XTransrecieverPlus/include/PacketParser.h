@@ -10,7 +10,12 @@ public:
 		BROWSE_REPLY = 1
 	};
 
-	Parser() {};
+	Parser() {}
+
+	Parser(const Parser& parserOld) {
+		//raw.clear();
+		message.payload.clear();
+	}
 
 	int test = 4;
 
@@ -52,7 +57,7 @@ public:
 	} message;
 
 	const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
-	std::vector<uint8_t> raw;
+	
 
 	//Persistent variables
 	bool decryptable = false; //can't decrypt unless session key is set via setSessionKey()
@@ -64,7 +69,8 @@ public:
 	void resetAll();
 private:
 
-	bool parsePia(std::vector<uint8_t> raw);
+	std::vector<uint8_t>* raw;
+	bool parsePia(std::vector<uint8_t> piaMsg);
 	//decrypts a given packet with sessionKey
 	bool DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t>* decrypted);
 	bool parseBrowseReply();

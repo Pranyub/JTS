@@ -14,6 +14,8 @@ void Responder::setParser(Parser* parserIn) {
 
 bool Responder::getResp(pcpp::Packet *out) {
 	protocol = parser->message.protocol_type;
+	if (parser->message.payload.size() < 1)
+		return false;
 	msgType = parser->message.payload[0];
 	packet = out;
 	bool hasResp = true;
