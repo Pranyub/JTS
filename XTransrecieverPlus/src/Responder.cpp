@@ -35,11 +35,17 @@ bool Responder::getResp(pcpp::Packet& out) {
 }
 
 void Responder::parseLan(Packet& packet) {
+
 	switch (msgType)
 	{
 	case Lan::BROWSE_REQ:
 		lan.craftBrowseReq(packet);
 		break;
+	case Lan::BROWSE_REP:
+		lan.craftHostReq(packet);
+		break;
+	case Lan::GET_HOST_REP:
+		exit(1);
 	default:
 		hasResp = false;
 		break;

@@ -12,6 +12,15 @@ uint64_t util::convertType(vector<uint8_t>::iterator iter, int size) {
 	return out;
 }
 
+vector<uint8_t> util::NumToVector(size_t in, int size) {
+
+	vector<uint8_t> out;
+	for (int i = (size - 1) * 8; i >= 0; i -= 8) {
+		out.push_back(in >> i);
+	}
+	return out;
+}
+
 void util::HexToVector(const string hex, vector<uint8_t> *in) {
 
 	

@@ -91,6 +91,17 @@ vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter
 	return iter;
 }
 
+std::vector<uint8_t> Parser::PIAHeader::set() {
+	vector<uint8_t> out;
+	out.insert(out.begin(), magic, magic + sizeof(magic));
+	out.push_back(connID);
+	std::vector<uint8_t> temp = NumToVector(packetID, 2);
+	out.insert(out.end(), temp.begin(), temp.end());
+	out.insert(out.end(), nonceCounter.begin(), nonceCounter.end());
+	out.insert(out.end(), tag.begin(), tag.end());
+	return out;
+}
+
 int Parser::Message::setMessage(vector<uint8_t> data) {
 	vector<uint8_t>::iterator iter = data.begin();
 	
@@ -137,6 +148,10 @@ bool Parser::parseBrowseReply() {
 
 	if (udpInfo.message_len != 1360) { return false; } //Safety check; all browse reply packets are 1360 bytes long
 										 //Checking for a matching session id is not yet implemented, so some errors may arise when attempting to use this program in a room with more than two switches
+
+	message.protocol_type = LAN;
+	message.payload.assign(raw->begin(), raw->end());
+	message.payload_size = udpInfo.message_len;
 
 	uint8_t session_param[32];
 	for (int i = 0; i < 32; i++) {
@@ -206,6 +221,40 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	EVP_CIPHER_CTX_free(ctx);
 	return true;
 
+}
+
+bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* encrypted, PIAHeader header_self) {
+	if (!decryptable) return false; //Cannot encrypt if sessionKey isn't set
+
+	while (decrypted.size() % 16 != 0)
+		decrypted.push_back(0xff); //add padding
+
+	encrypted->resize(decrypted.size());
+	int enc_len;
+	//Start encryption
+	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), header_self.nonceCounter.data());
+	EVP_EncryptUpdate(ctx, encrypted->data(), &enc_len, decrypted.data(), decrypted.size());
+
+
+	if (EVP_EncryptFinal_ex(ctx, encrypted->data() + decrypted.size(), &enc_len) != 1) {
+		printf("Error in Encryption\n");
+		return false;
+	}
+
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, header_self.tag.data());
+	EVP_CIPHER_CTX_free(ctx);
+
+	header_self.nonce++;
+	vector<uint8_t> temp = NumToVector(*header_self.nonce, sizeof(header_self.nonce));
+	
+	for (int i = 0; i < temp.size(); i++)
+		header_self.nonceCounter[i] = temp[i];
+	
+	temp = header_self.set();
+	encrypted->insert(encrypted->begin(), temp.begin(), temp.end());
+	return true;
 }
 
 void Parser::resetAll() {

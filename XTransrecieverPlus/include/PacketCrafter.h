@@ -12,12 +12,14 @@ namespace crft {
 		int protocolType = 0;
 		int messageType = 0;
 		
-		Parser* parser;
+		//nonce increment counter
+		static uint64_t nonce;
 
-		PiaPacket(Parser* parserIn) {
-			parser = parserIn;
-		}
-		PiaPacket() {}
+		Parser* parser = nullptr;
+		Parser::PIAHeader header;
+
+		PiaPacket(Parser* parserIn);
+		PiaPacket();
 	protected:
 		pcpp::Packet craftPacket(std::vector<uint8_t> data, int srcPort, int dstPort, int dstIP = 0x0a0000ff /*broadcast by default*/);
 	};
@@ -36,11 +38,13 @@ namespace crft {
 		
 
 		Lan(Parser *parserIn) : PiaPacket(parserIn) {
-			protocolType = 0x44;
+			protocolType = LAN;
 		}
 		Lan() {}
-		void craftBrowseReq(pcpp::Packet &in);
-
+		void craftBrowseReq(pcpp::Packet& in);
+		void craftHostReq(pcpp::Packet& in);
+		//void craftSessReq(pcpp::Packet& in);
+		//void craftKeepAlv(pcpp::Packet& in);
 	};
 	
 };

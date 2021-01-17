@@ -43,10 +43,13 @@ public:
 		std::array<uint8_t, 8> nonceCounter;
 		std::array<uint8_t, 16> tag;
 
+		//nonceCounter in integer form
+		uint64_t* nonce;
+		
 		//takes an iterator pointing at the beginning of PIA Header and sets values
 		//passing an iter by reference is a bit wonky so its done by value instead
 		std::vector<uint8_t>::iterator fill(std::vector<uint8_t>::iterator iter);
-
+		std::vector<uint8_t> set();
 	} header;
 
 	struct Message {
@@ -72,7 +75,11 @@ public:
 	std::array<uint8_t, 4> sessionID;
 	std::array<uint8_t, 16> sessionKey; //key used for decryption
 
+	//Start parsing
 	bool onPacket(pcpp::Packet packet);
+
+	//encrypts a packet with sessionKey and applies a given PIAHeader.
+	bool EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* encrypted, PIAHeader header_self);
 
 	void resetAll();
 private:
@@ -82,7 +89,7 @@ private:
 	
 	//decrypts a given packet with sessionKey
 	bool DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t>* decrypted);
-	
+
 	bool parseBrowseRequest();
 	bool parseBrowseReply();
 	
