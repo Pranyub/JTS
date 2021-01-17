@@ -22,7 +22,6 @@ bool Parser::onPacket(Packet packet) {
 	
 	if (udpLayer == nullptr || payloadLayer == nullptr || ipv4Layer == nullptr)
 		return false;
-	printf("%x\n", ipv4Layer->getIPv4Header()->ipSrc);
 	
 	uint8_t* message_pointer = payloadLayer->getData();
 	udpInfo.message_len = payloadLayer->getDataLen();
@@ -118,10 +117,10 @@ int Parser::Message::setMessage(vector<uint8_t> data) {
 		iter += 8;
 	}
 
-	payload.resize(payload_size);
+	vector<uint8_t> temp(payload_size);
 	for (int i = 0; i < payload_size; i++)
-		payload[i] = *iter++;
-
+		temp[i] = *iter++;
+	payload = temp;
 	return iter - data.begin();
 }
 

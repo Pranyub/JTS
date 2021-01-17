@@ -17,9 +17,8 @@ bool Responder::getResp(pcpp::Packet& out) {
 	if (parser->message.payload.size() < 1)
 		return false;
 	msgType = parser->message.payload[0];
-	bool hasResp = true;
+	hasResp = true;
 	
-
 	if (stage == HANDSHAKE) {
 		switch (protocol)
 		{
@@ -42,6 +41,7 @@ void Responder::parseLan(Packet& packet) {
 		lan.craftBrowseReq(packet);
 		break;
 	default:
+		hasResp = false;
 		break;
 	}
 

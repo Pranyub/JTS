@@ -15,8 +15,9 @@ public:
 	
 private:
 	Parser *parser;
-	int protocol;
-	int msgType;
+	int protocol = -1;
+	int msgType = -1;
+	bool hasResp = false;
 
 	crft::Lan lan;
 	void parseLan(pcpp::Packet& packet);

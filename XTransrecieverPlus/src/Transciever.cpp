@@ -21,9 +21,6 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	
 	if (parser->onPacket(packet)) {
 		if (responder->getResp(out)) {
-			printf("\nPAYLOAD: %02x %02x\n", parser->message.protocol_type, parser->message.payload[0]);
-			for (int i : parser->message.payload)
-				printf("%02x ", i);
 			dev->sendPacket(&out);
 
 		}
