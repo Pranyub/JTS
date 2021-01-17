@@ -9,9 +9,11 @@ uint64_t crft::PiaPacket::nonce = 0;
 crft::PiaPacket::PiaPacket(Parser* parserIn) {
 	parser = parserIn;
 	header.nonce = &nonce;
+	header.version = 0x84;
 }
 crft::PiaPacket::PiaPacket() {
 	header.nonce = &nonce;
+	header.version = 0x84;
 }
 
 Packet crft::PiaPacket::craftPacket(vector<uint8_t> data, int srcPort, int dstPort, int dstIP) {

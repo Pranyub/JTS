@@ -94,11 +94,13 @@ vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter
 std::vector<uint8_t> Parser::PIAHeader::set() {
 	vector<uint8_t> out;
 	out.insert(out.begin(), magic, magic + sizeof(magic));
+	out.push_back(version);
 	out.push_back(connID);
 	std::vector<uint8_t> temp = NumToVector(packetID, 2);
 	out.insert(out.end(), temp.begin(), temp.end());
 	out.insert(out.end(), nonceCounter.begin(), nonceCounter.end());
 	out.insert(out.end(), tag.begin(), tag.end());
+
 	return out;
 }
 
@@ -246,14 +248,15 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, header_self.tag.data());
 	EVP_CIPHER_CTX_free(ctx);
 
-	header_self.nonce++;
-	vector<uint8_t> temp = NumToVector(*header_self.nonce, sizeof(header_self.nonce));
-	
-	for (int i = 0; i < temp.size(); i++)
+	*header_self.nonce += 1;
+	vector<uint8_t> temp = NumToVector(*header_self.nonce, sizeof(*header_self.nonce));
+	for (int i = 0; i < temp.size(); i++) {
 		header_self.nonceCounter[i] = temp[i];
-	
+	}
+
 	temp = header_self.set();
 	encrypted->insert(encrypted->begin(), temp.begin(), temp.end());
+	
 	return true;
 }
 
