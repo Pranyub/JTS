@@ -1,5 +1,11 @@
 #include "PacketParser.h"
 #include <Packet.h>
+#include <EthLayer.h>
+#include <IPv4Layer.h>
+#include <UdpLayer.h>
+#include <PayloadLayer.h>
+#include "Util.h"
+#include "Config.h"
 namespace crft {
 
 	struct PiaPacket {
@@ -33,7 +39,7 @@ namespace crft {
 			protocolType = 0x44;
 		}
 		Lan() {}
-		pcpp::Packet craftBrowseReq();
+		void craftBrowseReq(pcpp::Packet &in);
 
 	};
 	

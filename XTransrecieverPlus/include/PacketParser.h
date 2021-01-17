@@ -2,15 +2,23 @@
 #include <vector>
 #include <array>
 #include <Packet.h>
+
+enum PROTOCOL {
+	LAN = 0x44
+};
+
+enum PacketTypes {
+	PIA_MSG = 0x32,
+	BROWSE_REQUEST = 0,
+	BROWSE_REPLY = 1
+};
+
 class Parser {
 public:
-	enum PacketTypes {
-		PIA_MSG = 0x32,
-		BROWSE_REQUEST = 0,
-		BROWSE_REPLY = 1
-	};
 
-	Parser() {}
+	Parser() {
+		raw = new std::vector<uint8_t>;
+	}
 
 	Parser(const Parser& parserOld) {
 		//raw.clear();
@@ -71,9 +79,13 @@ private:
 
 	std::vector<uint8_t>* raw;
 	bool parsePia(std::vector<uint8_t> piaMsg);
+	
 	//decrypts a given packet with sessionKey
 	bool DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t>* decrypted);
+	
+	bool parseBrowseRequest();
 	bool parseBrowseReply();
+	
 	void setSessionKey(const uint8_t mod_param[]);
 	//empty structs that can be used for resetting
 	const UDPData udpInfoReset;

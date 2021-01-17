@@ -20,9 +20,14 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Packet out;
 	
 	if (parser->onPacket(packet)) {
-		printf("GOT PACKET OF SIZE %d!\n", parser->udpInfo.message_len);
-		if (responder->getResp(&out))
+		if (responder->getResp(out)) {
+			printf("\nPAYLOAD: %02x %02x\n", parser->message.protocol_type, parser->message.payload[0]);
+			for (int i : parser->message.payload)
+				printf("%02x ", i);
 			dev->sendPacket(&out);
+
+		}
+		
 	}
 }
 
@@ -48,6 +53,6 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 		exit(1);
 	}
 	Cookie cookie;
-	cookie.responder.setParser(&cookie.parser);
+	cookie.responder.setParser(cookie.parser);
 	dev->startCapture(onPacket, &cookie);
 }

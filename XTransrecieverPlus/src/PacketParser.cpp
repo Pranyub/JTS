@@ -7,7 +7,7 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-
+#include "Config.h"
 using namespace pcpp;
 using namespace std;
 using namespace util;
@@ -22,6 +22,7 @@ bool Parser::onPacket(Packet packet) {
 	
 	if (udpLayer == nullptr || payloadLayer == nullptr || ipv4Layer == nullptr)
 		return false;
+	printf("%x\n", ipv4Layer->getIPv4Header()->ipSrc);
 	
 	uint8_t* message_pointer = payloadLayer->getData();
 	udpInfo.message_len = payloadLayer->getDataLen();
@@ -30,6 +31,9 @@ bool Parser::onPacket(Packet packet) {
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
 	udpInfo.dstPort = (int)udpLayer->getUdpHeader()->portDst;
 	
+	if (udpInfo.srcIP != cfg::switchIPAddrInt)
+		return false;
+
 	//Initialize raw with the payload data
 	raw = new vector<uint8_t>;
 	for (int i = 0; i < udpInfo.message_len; i++) {
@@ -45,16 +49,14 @@ bool Parser::onPacket(Packet packet) {
 		parsePia(*raw);
 		break;
 	case BROWSE_REQUEST:
-		message.payload.assign(raw->begin(), raw->end());
-		message.payload_size = udpInfo.message_len;
+		parseBrowseRequest();
 		break;
 	case BROWSE_REPLY:
 		parseBrowseReply(); //Used to get session key (used for encryption/decryption)
 		printf("Browse Reply from %x\n", udpInfo.srcIP);
 		break;
 	}
-	delete(raw);
-	raw = nullptr;
+	
 	return true;
 }
 
@@ -121,6 +123,15 @@ int Parser::Message::setMessage(vector<uint8_t> data) {
 		payload[i] = *iter++;
 
 	return iter - data.begin();
+}
+
+bool Parser::parseBrowseRequest() {
+	if (udpInfo.message_len != 873) { return false; } //Safety check; all browse request packets are 1360 bytes long
+	
+	message.protocol_type = LAN;
+	message.payload.assign(raw->begin(), raw->end());
+	message.payload_size = udpInfo.message_len;
+	return true;
 }
 
 bool Parser::parseBrowseReply() {
@@ -199,6 +210,8 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 }
 
 void Parser::resetAll() {
+	delete(raw);
+	raw = nullptr;
 	udpInfo = udpInfoReset;
 	header = headerReset;
 	message = messageReset;

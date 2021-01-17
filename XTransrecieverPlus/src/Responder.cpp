@@ -1,5 +1,5 @@
 #include "Responder.h"
-
+#include <PayloadLayer.h>
 
 
 using namespace std;
@@ -7,23 +7,24 @@ using namespace pcpp;
 using namespace crft;
 
 
-void Responder::setParser(Parser* parserIn) {
-	parser = parserIn;
+void Responder::setParser(Parser& parserIn) {
+	parser = &parserIn;
 	lan = Lan(parser);
 }
 
-bool Responder::getResp(pcpp::Packet *out) {
+bool Responder::getResp(pcpp::Packet& out) {
 	protocol = parser->message.protocol_type;
 	if (parser->message.payload.size() < 1)
 		return false;
 	msgType = parser->message.payload[0];
-	packet = out;
 	bool hasResp = true;
+	
+
 	if (stage == HANDSHAKE) {
 		switch (protocol)
 		{
 		case LAN:
-			parseLan();
+			parseLan(out);
 			break;
 		default:
 			hasResp = false;
@@ -34,15 +35,14 @@ bool Responder::getResp(pcpp::Packet *out) {
 	return hasResp;
 }
 
-void Responder::parseLan() {
-	
+void Responder::parseLan(Packet& packet) {
 	switch (msgType)
 	{
 	case Lan::BROWSE_REQ:
-		packet = &lan.craftBrowseReq();
+		lan.craftBrowseReq(packet);
 		break;
 	default:
 		break;
 	}
-	
+
 }
