@@ -65,6 +65,12 @@ public:
 		std::vector<uint8_t> payload;
 		//parses a PIA Message from a raw input
 		int setMessage(std::vector<uint8_t> data);
+
+		//returns a Message vector from values
+		std::vector<uint8_t> getMessage();
+
+		//appends header to given vector
+		void appendHeader(std::vector<uint8_t>* data);
 	} message;
 
 	const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption

@@ -7,6 +7,7 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <openssl/hmac.h>
 #include "Config.h"
 using namespace pcpp;
 using namespace std;
@@ -137,12 +138,123 @@ int Parser::Message::setMessage(vector<uint8_t> data) {
 	return iter - data.begin();
 }
 
+vector<uint8_t> Parser::Message::getMessage() {
+	vector<uint8_t> out;
+	vector<uint8_t> temp;
+
+	out.push_back(field_flags);
+	
+	if (field_flags & 1)
+		out.push_back(msg_flag);
+	
+	if (field_flags & 2) {
+		temp = NumToVector(payload_size, 2);
+		out.insert(out.end(), temp.begin(), temp.end());
+	}
+	
+	if (field_flags & 4) {
+		out.push_back(protocol_type);
+		out.insert(out.end(), protocol_port, protocol_port + 3);
+	}
+	
+	if (field_flags & 8) {
+		temp = NumToVector(destination, 8);
+		out.insert(out.end(), temp.begin(), temp.end());
+	}
+	
+	if (field_flags & 16) {
+		temp = NumToVector(source_station_id, 8);
+		out.insert(out.end(), temp.begin(), temp.end());
+	}
+	
+	return out;
+}
+
+void Parser::Message::appendHeader(vector<uint8_t>* data) {
+	payload_size = data->size();
+	vector<uint8_t> header = getMessage();
+	data->insert(data->begin(), header.begin(), header.end());
+
+}
+
 bool Parser::parseBrowseRequest() {
 	if (udpInfo.message_len != 873) { return false; } //Safety check; all browse request packets are 1360 bytes long
 	
 	message.protocol_type = LAN;
 	message.payload.assign(raw->begin(), raw->end());
 	message.payload_size = udpInfo.message_len;
+	
+	array<uint8_t, 12> challengeNonce;
+	array<uint8_t, 16> challengeKey;
+	array<uint8_t, 16> challengeTag;
+	array<uint8_t, 256> challenge;
+	
+	challengeNonce[0] = 10;
+	challengeNonce[1] = 0;
+	challengeNonce[2] = 0;
+	challengeNonce[3] = 255;
+
+	copy(raw->begin() + 577, raw->begin() + 585, challengeNonce.data() + 4);
+	copy(raw->begin() + 585, raw->begin() + 601, challengeKey.data());
+	copy(raw->begin() + 601, raw->begin() + 617, challengeTag.data());
+	copy(raw->begin() + 617, raw->begin() + 873, challenge.data());
+
+	int len;
+	uint8_t decryptedKey[16];
+
+	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, nullptr, nullptr);
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, GAME_KEY, nullptr);
+	EVP_EncryptUpdate(ctx, decryptedKey, &len, challengeKey.data(), 16);
+
+	EVP_CIPHER_CTX_reset(ctx);
+
+	array<uint8_t, 256> decrypted;
+
+	ctx = EVP_CIPHER_CTX_new();
+	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
+	EVP_DecryptInit_ex(ctx, nullptr, nullptr, decryptedKey, challengeNonce.data());
+	EVP_DecryptUpdate(ctx, decrypted.data(), &len, challenge.data(), challenge.size());
+	EVP_DecryptFinal_ex(ctx, decrypted.data() + decrypted.size(), &len);
+	EVP_CIPHER_CTX_reset(ctx);
+	
+	uint8_t* resp;
+
+	resp = HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), nullptr, nullptr);
+
+	
+	
+	uint8_t* encKeyPtr;
+	vector<uint8_t> respPre;
+	vector<uint8_t> selfKey;
+	HexToVector("ff900b316a606564d898ffc3351302fd", &selfKey);
+	respPre.insert(respPre.end(), selfKey.begin(), selfKey.end());
+	respPre.insert(respPre.end(), challengeKey.begin(), challengeKey.end());
+	encKeyPtr = HMAC(EVP_sha256(), GAME_KEY, 16, respPre.data(), respPre.size(), nullptr, nullptr);
+
+
+	array<uint8_t, 16> encKey;
+	for (int i = 0; i < encKey.size(); i++)
+		encKey[i] = *(encKeyPtr + i);
+
+	array<uint8_t, 16> out;
+
+	ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, encKey.data(), challengeNonce.data());
+	EVP_EncryptUpdate(ctx, out.data(), &len, resp, 16);
+
+
+	if (EVP_EncryptFinal_ex(ctx, out.data() + out.size(), &len) != 1) {
+		printf("Error in Encryption\n");
+		return false;
+	}
+
+	EVP_CIPHER_CTX_free(ctx);
+	for (int i = 0; i < 16; i++)
+		printf("%02x", challengeKey[i]);
+	printf("\n");
+	
 	return true;
 }
 
@@ -221,6 +333,13 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	}
 
 	EVP_CIPHER_CTX_free(ctx);
+	/*
+	printf("RECV: ");
+	for (int i : *decrypted)
+		printf("%02x ", i);
+	printf("\n\n");
+	*/
+
 	return true;
 
 }
@@ -257,6 +376,13 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	temp = header_self.set();
 	encrypted->insert(encrypted->begin(), temp.begin(), temp.end());
 	
+	/*
+	printf("SENT: ");
+	for (int i : decrypted)
+		printf("%02x ", i);
+	printf("\n\n");
+	*/
+
 	return true;
 }
 

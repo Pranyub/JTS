@@ -20,6 +20,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Packet out;
 	
 	if (parser->onPacket(packet)) {
+		
 		if (responder->getResp(out)) {
 			dev->sendPacket(&out);
 

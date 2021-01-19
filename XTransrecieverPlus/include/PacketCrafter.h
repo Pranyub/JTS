@@ -17,7 +17,7 @@ namespace crft {
 
 		Parser* parser = nullptr;
 		Parser::PIAHeader header;
-
+		Parser::Message message;
 		PiaPacket(Parser* parserIn);
 		PiaPacket();
 	protected:
@@ -35,13 +35,16 @@ namespace crft {
 			KEEP_ALIVE = 7
 		};
 
-		
+		bool shouldRep = true;
 
 		Lan(Parser *parserIn) : PiaPacket(parserIn) {
-			protocolType = LAN;
+			message.protocol_type = LAN;
+			
+
 		}
 		Lan() {}
 		void craftBrowseReq(pcpp::Packet& in);
+		void craftBrowseRep(pcpp::Packet& in);
 		void craftHostReq(pcpp::Packet& in);
 		//void craftSessReq(pcpp::Packet& in);
 		//void craftKeepAlv(pcpp::Packet& in);
