@@ -39,6 +39,7 @@ void Responder::parseLan(Packet& packet) {
 	switch (msgType)
 	{
 	case Lan::BROWSE_REQ:
+		lan.craftBrowseRep(packet);
 		lan.craftBrowseReq(packet);
 		break;
 	case Lan::BROWSE_REP:

@@ -31,7 +31,7 @@ bool Parser::onPacket(Packet packet) {
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
 	udpInfo.dstPort = (int)udpLayer->getUdpHeader()->portDst;
 	
-	if (udpInfo.srcIP != cfg::switchIPAddrInt)
+	if (udpInfo.srcIP != cfg::switchIPAddrInt && cfg::is_live==true)
 		return false;
 
 	//Initialize raw with the payload data
@@ -184,6 +184,7 @@ bool Parser::parseBrowseRequest() {
 	message.payload.assign(raw->begin(), raw->end());
 	message.payload_size = udpInfo.message_len;
 	
+
 	array<uint8_t, 12> challengeNonce;
 	array<uint8_t, 16> challengeKey;
 	array<uint8_t, 16> challengeTag;
@@ -199,6 +200,11 @@ bool Parser::parseBrowseRequest() {
 	copy(raw->begin() + 601, raw->begin() + 617, challengeTag.data());
 	copy(raw->begin() + 617, raw->begin() + 873, challenge.data());
 
+	//
+	//Decrypt the challenge
+	//
+
+	//Get decryption key
 	int len;
 	uint8_t decryptedKey[16];
 
@@ -206,9 +212,11 @@ bool Parser::parseBrowseRequest() {
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, nullptr, nullptr);
 	EVP_EncryptInit_ex(ctx, nullptr, nullptr, GAME_KEY, nullptr);
 	EVP_EncryptUpdate(ctx, decryptedKey, &len, challengeKey.data(), 16);
-
 	EVP_CIPHER_CTX_reset(ctx);
 
+
+	
+	//decrypt using key
 	array<uint8_t, 256> decrypted;
 
 	ctx = EVP_CIPHER_CTX_new();
@@ -218,30 +226,27 @@ bool Parser::parseBrowseRequest() {
 	EVP_DecryptFinal_ex(ctx, decrypted.data() + decrypted.size(), &len);
 	EVP_CIPHER_CTX_reset(ctx);
 	
-	uint8_t* resp;
 
-	resp = HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), nullptr, nullptr);
 
 	
+	//raw response
+	uint8_t* resp = HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), nullptr, nullptr);
 	
-	uint8_t* encKeyPtr;
-	vector<uint8_t> respPre;
+	
+	vector<uint8_t> respKey;
 	vector<uint8_t> selfKey;
-	HexToVector("ff900b316a606564d898ffc3351302fd", &selfKey);
-	respPre.insert(respPre.end(), selfKey.begin(), selfKey.end());
-	respPre.insert(respPre.end(), challengeKey.begin(), challengeKey.end());
-	encKeyPtr = HMAC(EVP_sha256(), GAME_KEY, 16, respPre.data(), respPre.size(), nullptr, nullptr);
+	HexToVector("cfe0ec237fb19af6aec596784129bb50", &selfKey);
+	respKey.insert(respKey.end(), selfKey.begin(), selfKey.end());
+	respKey.insert(respKey.end(), challengeKey.begin(), challengeKey.end());
+	uint8_t* encKey = HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), nullptr, nullptr);
 
 
-	array<uint8_t, 16> encKey;
-	for (int i = 0; i < encKey.size(); i++)
-		encKey[i] = *(encKeyPtr + i);
-
+	//encrypt response
 	array<uint8_t, 16> out;
 
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, encKey.data(), challengeNonce.data());
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, encKey, challengeNonce.data());
 	EVP_EncryptUpdate(ctx, out.data(), &len, resp, 16);
 
 
@@ -251,10 +256,27 @@ bool Parser::parseBrowseRequest() {
 	}
 
 	EVP_CIPHER_CTX_free(ctx);
-	for (int i = 0; i < 16; i++)
-		printf("%02x", challengeKey[i]);
-	printf("\n");
-	
+	if (udpInfo.srcIP != 0x0a00003d) {
+		printf("NONCE: ");
+		for (int i : challengeNonce)
+			printf("%02x", i);
+		printf(" | ");
+
+		printf("Key: ");
+		for (int i : challengeKey)
+			printf("%02x", i);
+		printf(" | ");
+
+		printf("Tag: ");
+		for (int i : challengeTag)
+			printf("%02x", i);
+		printf(" | ");
+
+		printf("Dec: ");
+		for (int i : challenge)
+			printf("%02x", i);
+		printf("\n");
+	}
 	return true;
 }
 

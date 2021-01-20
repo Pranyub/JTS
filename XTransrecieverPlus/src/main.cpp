@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 
 	const string path = "D:\\ninjhax\\main\\Documents - HDD\\GitHub\\XTransrecieverPlus\\packets\\";
 	if (!cfg::is_live)
-		r.Start(path + "XTransreciever_16.pcap");
+		r.Start(path + cfg::fileName);
 	else {
 		tx.Start(cfg::interfaceIPAddr, cfg::switchIPAddr, cfg::searchfilter);
 		while (true) {}
