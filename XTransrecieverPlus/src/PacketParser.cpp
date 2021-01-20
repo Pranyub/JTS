@@ -83,6 +83,7 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 	return true;
 }
 
+
 vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter) {
 	connID = *iter++;
 	packetID = convertType(iter, 2); iter += 2;
@@ -104,6 +105,7 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 
 	return out;
 }
+
 
 int Parser::Message::setMessage(vector<uint8_t> data) {
 	vector<uint8_t>::iterator iter = data.begin();
@@ -177,29 +179,58 @@ void Parser::Message::appendHeader(vector<uint8_t>* data) {
 
 }
 
-bool Parser::parseBrowseRequest() {
-	if (udpInfo.message_len != 873) { return false; } //Safety check; all browse request packets are 1360 bytes long
-	
-	message.protocol_type = LAN;
-	message.payload.assign(raw->begin(), raw->end());
-	message.payload_size = udpInfo.message_len;
-	
 
-	array<uint8_t, 12> challengeNonce;
-	array<uint8_t, 16> challengeKey;
-	array<uint8_t, 16> challengeTag;
-	array<uint8_t, 256> challenge;
-	
+vector<uint8_t> Parser::CryptoChallenge::makeChallenge() {
+	vector<uint8_t> out;
+	out.push_back(version);
+	out.push_back(enabled);
+	out.insert(out.end(), challengeNonce.begin() + 4, challengeNonce.end());
+	out.insert(out.end(), challengeKey.begin(), challengeKey.end());
+	out.insert(out.end(), challengeTag.begin(), challengeTag.end());
+	out.insert(out.end(), challenge.begin(), challenge.end());
+	return out;
+}
+
+bool Parser::CryptoChallenge::parseChallenge(vector<uint8_t> raw) {
+	//nothing really of value in browseReply, so only browseRequest can be parsed.
+	if (raw.size() != 873) { return false; }
+
 	challengeNonce[0] = 10;
 	challengeNonce[1] = 0;
 	challengeNonce[2] = 0;
 	challengeNonce[3] = 255;
 
-	copy(raw->begin() + 577, raw->begin() + 585, challengeNonce.data() + 4);
-	copy(raw->begin() + 585, raw->begin() + 601, challengeKey.data());
-	copy(raw->begin() + 601, raw->begin() + 617, challengeTag.data());
-	copy(raw->begin() + 617, raw->begin() + 873, challenge.data());
+	copy(raw.begin() + 577, raw.begin() + 585, challengeNonce.data() + 4);
+	copy(raw.begin() + 585, raw.begin() + 601, challengeKey.data());
+	copy(raw.begin() + 601, raw.begin() + 617, challengeTag.data());
+	copy(raw.begin() + 617, raw.begin() + 873, challenge.data());
+	
+	return true;
+}
 
+vector<uint8_t> Parser::CryptoChallenge::makeResponse() {
+	vector<uint8_t> out;
+	out.push_back(version);
+	out.push_back(enabled);
+	out.insert(out.end(), challengeNonce.begin() + 4, challengeNonce.end());
+	out.insert(out.end(), challengeKey.begin(), challengeKey.end());
+	out.insert(out.end(), challengeTag.begin(), challengeTag.end());
+	out.insert(out.end(), challenge.begin(), challenge.end());
+	return out;
+}
+
+
+bool Parser::parseBrowseRequest() {
+	if (udpInfo.message_len != 873) { return false; } //Safety check; all browse request packets are 1360 bytes long
+	
+	message.protocol_type = LAN;
+	
+	array<uint8_t, 12> challengeNonce;
+	array<uint8_t, 16> challengeKey;
+	array<uint8_t, 16> challengeTag;
+	array<uint8_t, 256> challenge;
+	
+	
 	//
 	//Decrypt the challenge
 	//
@@ -209,8 +240,7 @@ bool Parser::parseBrowseRequest() {
 	uint8_t decryptedKey[16];
 
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, GAME_KEY, nullptr);
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, GAME_KEY, nullptr);
 	EVP_EncryptUpdate(ctx, decryptedKey, &len, challengeKey.data(), 16);
 	EVP_CIPHER_CTX_reset(ctx);
 
@@ -220,42 +250,38 @@ bool Parser::parseBrowseRequest() {
 	array<uint8_t, 256> decrypted;
 
 	ctx = EVP_CIPHER_CTX_new();
-	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_DecryptInit_ex(ctx, nullptr, nullptr, decryptedKey, challengeNonce.data());
+	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, decryptedKey, challengeNonce.data());
 	EVP_DecryptUpdate(ctx, decrypted.data(), &len, challenge.data(), challenge.size());
 	EVP_DecryptFinal_ex(ctx, decrypted.data() + decrypted.size(), &len);
 	EVP_CIPHER_CTX_reset(ctx);
 	
-
-
+	message.payload.assign(decrypted.begin(), decrypted.end());
+	message.payload_size = decrypted.size();
 	
 	//raw response
-	uint8_t* resp = HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), nullptr, nullptr);
+	uint8_t resp[32];
+	HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), resp, nullptr);
 	
 	
 	vector<uint8_t> respKey;
 	vector<uint8_t> selfKey;
-	HexToVector("cfe0ec237fb19af6aec596784129bb50", &selfKey);
+	HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
 	respKey.insert(respKey.end(), selfKey.begin(), selfKey.end());
 	respKey.insert(respKey.end(), challengeKey.begin(), challengeKey.end());
-	uint8_t* encKey = HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), nullptr, nullptr);
+	uint8_t encKey[32];
+	HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), encKey, nullptr);
 
 
 	//encrypt response
 	array<uint8_t, 16> out;
 
 	ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, encKey, challengeNonce.data());
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, encKey, challengeNonce.data());
 	EVP_EncryptUpdate(ctx, out.data(), &len, resp, 16);
-
-
-	if (EVP_EncryptFinal_ex(ctx, out.data() + out.size(), &len) != 1) {
-		printf("Error in Encryption\n");
-		return false;
-	}
-
+	EVP_EncryptFinal_ex(ctx, out.data() + out.size(), &len);
 	EVP_CIPHER_CTX_free(ctx);
+
+
 	if (udpInfo.srcIP != 0x0a00003d) {
 		printf("NONCE: ");
 		for (int i : challengeNonce)
@@ -268,13 +294,13 @@ bool Parser::parseBrowseRequest() {
 		printf(" | ");
 
 		printf("Tag: ");
-		for (int i : challengeTag)
+		for (int i : message.payload)
 			printf("%02x", i);
 		printf(" | ");
 
 		printf("Dec: ");
-		for (int i : challenge)
-			printf("%02x", i);
+		for (int i=0; i<16; i++)
+			printf("%02x", encKey[i]);
 		printf("\n");
 	}
 	return true;
@@ -412,6 +438,4 @@ void Parser::resetAll() {
 	delete(raw);
 	raw = nullptr;
 	udpInfo = udpInfoReset;
-	header = headerReset;
-	message = messageReset;
 }

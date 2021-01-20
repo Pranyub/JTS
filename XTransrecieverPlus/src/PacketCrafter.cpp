@@ -78,70 +78,28 @@ void crft::Lan::craftHostReq(Packet& in) {
 
 void crft::Lan::craftBrowseRep(Packet& in) {
 
-	array<uint8_t, 12> challengeNonce;
-	array<uint8_t, 16> challengeKey;
-	array<uint8_t, 16> challengeTag;
-	array<uint8_t, 256> challenge;
-
-	challengeNonce[0] = 10;
-	challengeNonce[1] = 0;
-	challengeNonce[2] = 0;
-	challengeNonce[3] = 255;
-
-	vector<uint8_t>* raw = parser->raw;
-
-	copy(raw->begin() + 577, raw->begin() + 585, challengeNonce.data() + 4);
-	copy(raw->begin() + 585, raw->begin() + 601, challengeKey.data());
-	copy(raw->begin() + 601, raw->begin() + 617, challengeTag.data());
-	copy(raw->begin() + 617, raw->begin() + 873, challenge.data());
-
-	//
-	//Decrypt the challenge
-	//
-
-	//Get decryption key
-	int len;
-	uint8_t decryptedKey[16];
-	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, parser->GAME_KEY, nullptr);
-	EVP_EncryptUpdate(ctx, decryptedKey, &len, challengeKey.data(), 16);
-	EVP_CIPHER_CTX_reset(ctx);
-
-
-	//decrypt using key
-	array<uint8_t, 256> decrypted;
-
-	ctx = EVP_CIPHER_CTX_new();
-	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, decryptedKey, challengeNonce.data());
-	EVP_DecryptUpdate(ctx, decrypted.data(), &len, challenge.data(), challenge.size());
-	EVP_DecryptFinal_ex(ctx, decrypted.data() + decrypted.size(), &len);
-	EVP_CIPHER_CTX_reset(ctx);
-
-
 	//raw response
-	uint8_t* resp = HMAC(EVP_sha256(), parser->GAME_KEY, 16, decrypted.data(), decrypted.size(), nullptr, nullptr);
+	uint8_t resp[32];
+	HMAC(EVP_sha256(), parser->GAME_KEY, 16, parser->message.payload.data(), parser->message.payload.size(), resp, nullptr);
 
+
+	vector<uint8_t> selfKey;
+	HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
 
 	vector<uint8_t> respKey;
-	vector<uint8_t> selfKey;
-	HexToVector("cfe0ec237fb19af6aec596784129bb50", &selfKey);
 	respKey.insert(respKey.end(), selfKey.begin(), selfKey.end());
 	respKey.insert(respKey.end(), challengeKey.begin(), challengeKey.end());
-	uint8_t* encKey = HMAC(EVP_sha256(), parser->GAME_KEY, 16, respKey.data(), respKey.size(), nullptr, nullptr);
+	uint8_t encKey[32];
+	HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), encKey, nullptr);
 
 
 	//encrypt response
-	array<uint8_t, 16> enc;
+	array<uint8_t, 16> out;
 
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, encKey, challengeNonce.data());
-	EVP_EncryptUpdate(ctx, enc.data(), &len, resp, 16);
-	if (EVP_EncryptFinal_ex(ctx, enc.data() + enc.size(), &len) != 1)
-		printf("Error in Encryption\n");
-
-	array<uint8_t, 16> tag;
-	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag.data());
-
+	EVP_EncryptUpdate(ctx, out.data(), &len, resp, 16);
+	EVP_EncryptFinal_ex(ctx, out.data() + out.size(), &len);
 	EVP_CIPHER_CTX_free(ctx);
 	
 	

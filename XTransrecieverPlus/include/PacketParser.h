@@ -41,10 +41,11 @@ public:
 		uint8_t connID = 0;
 		uint16_t packetID = 0;
 		std::array<uint8_t, 8> nonceCounter;
-		std::array<uint8_t, 16> tag;
-
 		//nonceCounter in integer form
 		uint64_t* nonce;
+		std::array<uint8_t, 16> tag;
+
+		
 		
 		//takes an iterator pointing at the beginning of PIA Header and sets values
 		//passing an iter by reference is a bit wonky so its done by value instead
@@ -73,8 +74,24 @@ public:
 		void appendHeader(std::vector<uint8_t>* data);
 	} message;
 
-	const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
-	
+	struct CryptoChallenge {
+		uint8_t version = 2;
+		uint8_t enabled = 1;
+		
+		std::array<uint8_t, 12> challengeNonce;
+		//nonce in integer form
+		uint64_t* nonce;
+		std::array<uint8_t, 16> challengeKey;
+		std::array<uint8_t, 16> challengeTag;
+		std::vector<uint8_t> challenge;
+
+		bool parseChallenge(std::vector<uint8_t> raw);
+		std::vector<uint8_t> makeChallenge();
+		std::vector<uint8_t> makeResponse();
+	} browseReply;
+
+	//const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
+	const uint8_t GAME_KEY[16] = { 0x70, 0x31, 0x66, 0x72, 0x58, 0x71, 0x78, 0x6d, 0x65, 0x43, 0x5a, 0x57, 0x46, 0x76, 0x30, 0x58 };
 	std::vector<uint8_t>* raw;
 
 	//Persistent variables
