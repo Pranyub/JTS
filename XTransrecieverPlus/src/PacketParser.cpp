@@ -262,6 +262,7 @@ bool Parser::parseBrowseRequest() {
 	uint8_t resp[32];
 	HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), resp, nullptr);
 	
+	int test = 0;
 	
 	vector<uint8_t> respKey;
 	vector<uint8_t> selfKey;
