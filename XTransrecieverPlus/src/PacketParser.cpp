@@ -87,6 +87,7 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter) {
 	connID = *iter++;
 	packetID = convertType(iter, 2); iter += 2;
+	vector<uint8_t> nonceCounter = NumToVector(*nonce, sizeof(*nonce));
 	copy(iter, iter + 8, nonceCounter.data()); iter += 8;
 	copy(iter, iter + 16, tag.data()); iter += 16;
 
@@ -100,6 +101,7 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 	out.push_back(connID);
 	std::vector<uint8_t> temp = NumToVector(packetID, 2);
 	out.insert(out.end(), temp.begin(), temp.end());
+	vector<uint8_t> nonceCounter = NumToVector(*nonce, sizeof(*nonce));
 	out.insert(out.end(), nonceCounter.begin(), nonceCounter.end());
 	out.insert(out.end(), tag.begin(), tag.end());
 
@@ -184,6 +186,18 @@ vector<uint8_t> Parser::CryptoChallenge::makeChallenge() {
 	vector<uint8_t> out;
 	out.push_back(version);
 	out.push_back(enabled);
+
+	vector<uint8_t> nonceCounter = NumToVector(*nonce, sizeof(*nonce));
+
+	array<uint8_t, 12> challengeNonce;
+	for (int i = 0; i < 8; i++)
+		challengeNonce[i + 4] = nonceCounter[i];
+
+	challengeNonce[0] = 10;
+	challengeNonce[1] = 0;
+	challengeNonce[2] = 0;
+	challengeNonce[3] = 255;
+
 	out.insert(out.end(), challengeNonce.begin() + 4, challengeNonce.end());
 	out.insert(out.end(), challengeKey.begin(), challengeKey.end());
 	out.insert(out.end(), challengeTag.begin(), challengeTag.end());
@@ -195,6 +209,13 @@ bool Parser::CryptoChallenge::parseChallenge(vector<uint8_t> raw) {
 	//nothing really of value in browseReply, so only browseRequest can be parsed.
 	if (raw.size() != 873) { return false; }
 
+	nonce += 1;
+	vector<uint8_t> nonceCounter = NumToVector(*nonce, sizeof(*nonce));
+	
+	array<uint8_t, 12> challengeNonce;
+	for (int i = 0; i < 8; i++)
+		challengeNonce[i + 4] = nonceCounter[i];
+
 	challengeNonce[0] = 10;
 	challengeNonce[1] = 0;
 	challengeNonce[2] = 0;
@@ -205,17 +226,57 @@ bool Parser::CryptoChallenge::parseChallenge(vector<uint8_t> raw) {
 	copy(raw.begin() + 601, raw.begin() + 617, challengeTag.data());
 	copy(raw.begin() + 617, raw.begin() + 873, challenge.data());
 	
+	
+
+
 	return true;
 }
 
 vector<uint8_t> Parser::CryptoChallenge::makeResponse() {
+
+	vector<uint8_t> nonceCounter = NumToVector(*nonce, sizeof(*nonce));
+
+	array<uint8_t, 12> challengeNonce;
+	for (int i = 0; i < 8; i++)
+		challengeNonce[i + 4] = nonceCounter[i];
+
+
+	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+
+	array<uint8_t, 256> decrypted;
+
+	//raw response
+	uint8_t resp[32];
+	HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), resp, nullptr);
+
+	vector<uint8_t> respKey;
+	vector<uint8_t> selfKey;
+	HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
+	respKey.insert(respKey.end(), selfKey.begin(), selfKey.end());
+	respKey.insert(respKey.end(), challengeKey.begin(), challengeKey.end());
+	uint8_t encKey[32];
+	HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), encKey, nullptr);
+
+
+	//encrypt response
+	array<uint8_t, 16> enc;
+	int len;
+
+	ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, encKey, challengeNonce.data());
+	EVP_EncryptUpdate(ctx, enc.data(), &len, resp, 16);
+	EVP_EncryptFinal_ex(ctx, enc.data() + enc.size(), &len);
+	EVP_CIPHER_CTX_free(ctx);
+
+
 	vector<uint8_t> out;
 	out.push_back(version);
 	out.push_back(enabled);
 	out.insert(out.end(), challengeNonce.begin() + 4, challengeNonce.end());
-	out.insert(out.end(), challengeKey.begin(), challengeKey.end());
+	out.insert(out.end(), selfKey.begin(), selfKey.end());
 	out.insert(out.end(), challengeTag.begin(), challengeTag.end());
-	out.insert(out.end(), challenge.begin(), challenge.end());
+	out.insert(out.end(), enc.begin(), enc.end());
+
 	return out;
 }
 
@@ -258,57 +319,16 @@ bool Parser::parseBrowseRequest() {
 	message.payload.assign(decrypted.begin(), decrypted.end());
 	message.payload_size = decrypted.size();
 	
-	//raw response
-	uint8_t resp[32];
-	HMAC(EVP_sha256(), GAME_KEY, 16, decrypted.data(), decrypted.size(), resp, nullptr);
-	
-	vector<uint8_t> respKey;
-	vector<uint8_t> selfKey;
-	HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
-	respKey.insert(respKey.end(), selfKey.begin(), selfKey.end());
-	respKey.insert(respKey.end(), challengeKey.begin(), challengeKey.end());
-	uint8_t encKey[32];
-	HMAC(EVP_sha256(), GAME_KEY, 16, respKey.data(), respKey.size(), encKey, nullptr);
 
-
-	//encrypt response
-	array<uint8_t, 16> out;
-
-	ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, encKey, challengeNonce.data());
-	EVP_EncryptUpdate(ctx, out.data(), &len, resp, 16);
-	EVP_EncryptFinal_ex(ctx, out.data() + out.size(), &len);
-	EVP_CIPHER_CTX_free(ctx);
-
-
-	if (udpInfo.srcIP != 0x0a00003d) {
-		printf("NONCE: ");
-		for (int i : challengeNonce)
-			printf("%02x", i);
-		printf(" | ");
-
-		printf("Key: ");
-		for (int i : challengeKey)
-			printf("%02x", i);
-		printf(" | ");
-
-		printf("Tag: ");
-		for (int i : message.payload)
-			printf("%02x", i);
-		printf(" | ");
-
-		printf("Dec: ");
-		for (int i=0; i<16; i++)
-			printf("%02x", encKey[i]);
-		printf("\n");
-	}
 	return true;
 }
 
 bool Parser::parseBrowseReply() {
 
 	if (udpInfo.message_len != 1360) { return false; } //Safety check; all browse reply packets are 1360 bytes long
-										 //Checking for a matching session id is not yet implemented, so some errors may arise when attempting to use this program in a room with more than two switches
+
+	//Checking for a matching session id is not yet implemented, so some errors may arise
+	//when attempting to use this program in a room with more than two switches
 
 	message.protocol_type = LAN;
 	message.payload.assign(raw->begin(), raw->end());
@@ -353,14 +373,17 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	else if (!decryptable)
 		return false; //Cannot decrypt if sessionKey isn't set
 
+
+	vector<uint8_t> nonceCounter = NumToVector(*header.nonce, sizeof(*header.nonce));
 	uint8_t nonce[12];
+
 
 	//Set the nonce with the source ip and nonce counter
 	for (int i = 0; i < 4; i++)
 		nonce[i] = (udpInfo.srcIP >> (24 - i * 8) & 0xFF);
 	nonce[4] = header.connID;
 	for (int i = 1; i < 8; i++) {
-		nonce[i + 4] = header.nonceCounter[i];
+		nonce[i + 4] = nonceCounter[i];
 	}
 
 	int decrypted_len;
@@ -397,12 +420,16 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	while (decrypted.size() % 16 != 0)
 		decrypted.push_back(0xff); //add padding
 
+	*header_self.nonce += 1;
+	vector<uint8_t> nonceCounter = NumToVector(*header_self.nonce, sizeof(*header_self.nonce));
+
+
 	encrypted->resize(decrypted.size());
 	int enc_len;
 	//Start encryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), header_self.nonceCounter.data());
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), nonceCounter.data());
 	EVP_EncryptUpdate(ctx, encrypted->data(), &enc_len, decrypted.data(), decrypted.size());
 
 
@@ -414,21 +441,9 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, header_self.tag.data());
 	EVP_CIPHER_CTX_free(ctx);
 
-	*header_self.nonce += 1;
-	vector<uint8_t> temp = NumToVector(*header_self.nonce, sizeof(*header_self.nonce));
-	for (int i = 0; i < temp.size(); i++) {
-		header_self.nonceCounter[i] = temp[i];
-	}
-
-	temp = header_self.set();
+	vector<uint8_t> temp = header_self.set();
 	encrypted->insert(encrypted->begin(), temp.begin(), temp.end());
-	
-	/*
-	printf("SENT: ");
-	for (int i : decrypted)
-		printf("%02x ", i);
-	printf("\n\n");
-	*/
+
 
 	return true;
 }

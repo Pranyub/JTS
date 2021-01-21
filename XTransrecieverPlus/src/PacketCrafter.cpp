@@ -77,10 +77,10 @@ void crft::Lan::craftHostReq(Packet& in) {
 }
 
 void crft::Lan::craftBrowseRep(Packet& in) {
-
+	/*
 	//raw response
 	uint8_t resp[32];
-	HMAC(EVP_sha256(), parser->GAME_KEY, 16, parser->message.payload.data(), parser->message.payload.size(), resp, nullptr);
+	HMAC(EVP_sha256(), GAME_KEY, 16, parser->message.payload.data(), parser->message.payload.size(), resp, nullptr);
 
 
 	vector<uint8_t> selfKey;
@@ -115,4 +115,5 @@ void crft::Lan::craftBrowseRep(Packet& in) {
 	printf("\n");
 
 	in = craftPacket(out, 30000, 30000, 0x0a00003d);
+	*/
 }
