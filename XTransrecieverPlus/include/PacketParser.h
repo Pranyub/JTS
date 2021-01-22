@@ -29,28 +29,6 @@ public:
 
 	int test = 4;
 
-	struct CryptoChallenge {
-		uint8_t version = 2;
-		uint8_t enabled = 1;
-
-		//nonce in integer form
-		uint64_t* nonce;
-		std::array<uint8_t, 16> challengeKey;
-		std::array<uint8_t, 16> challengeTag;
-		std::vector<uint8_t> challenge;
-
-		CryptoChallenge() {}
-
-		CryptoChallenge(uint64_t* setNonce) {
-			nonce = setNonce;
-		}
-
-		bool parseChallenge(std::vector<uint8_t> raw);
-		std::vector<uint8_t> makeChallenge();
-		std::vector<uint8_t> makeResponse();
-
-	} browseReply;
-
 	struct UDPData {
 		int srcIP = 0;
 		int dstIP = 0;
@@ -65,7 +43,7 @@ public:
 		uint8_t connID = 0;
 		uint16_t packetID = 0;
 		//nonceCounter in integer form
-		uint64_t* nonce;
+		uint64_t nonce = 1;
 		std::array<uint8_t, 16> tag;
 		
 		//takes an iterator pointing at the beginning of PIA Header and sets values
@@ -94,6 +72,30 @@ public:
 		//appends header to given vector
 		void appendHeader(std::vector<uint8_t>* data);
 	} message;
+
+	struct CryptoChallenge {
+		uint8_t version = 2;
+		uint8_t enabled = 1;
+
+		//nonce in integer form
+		uint64_t* nonce;
+		std::array<uint8_t, 16> challengeKey; //browse request key
+		std::vector<uint8_t> selfKey; //browse response key
+		std::array<uint8_t, 16> challengeTag;
+		std::vector<uint8_t> challenge;
+
+		CryptoChallenge() {}
+
+		CryptoChallenge(uint64_t* setNonce) {
+			nonce = setNonce;
+		}
+
+		bool parseChallenge(std::vector<uint8_t> raw, std::array<uint8_t, 12>* challengeNonce);
+		std::vector<uint8_t> makeChallenge();
+		//uses the DECRYPTED challenge and returns the full challenge response. Session param not included.
+		std::vector<uint8_t> makeResponse();
+
+	} browseReply{&header.nonce};
 
 	//const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
 	std::vector<uint8_t>* raw;

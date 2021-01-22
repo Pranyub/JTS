@@ -10,7 +10,7 @@ enum STAGE {
 class Responder {
 public: 
 	void setParser(Parser& parserIn);
-	bool getResp(pcpp::Packet& out);
+	bool getResp(std::vector<pcpp::Packet>& out);
 	int stage = HANDSHAKE;
 	
 private:
@@ -20,5 +20,5 @@ private:
 	bool hasResp = false;
 
 	crft::Lan lan;
-	void parseLan(pcpp::Packet& packet);
+	void parseLan(std::vector<pcpp::Packet>& packet);
 };

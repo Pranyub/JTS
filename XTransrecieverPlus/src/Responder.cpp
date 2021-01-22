@@ -12,7 +12,7 @@ void Responder::setParser(Parser& parserIn) {
 	lan = Lan(parser);
 }
 
-bool Responder::getResp(pcpp::Packet& out) {
+bool Responder::getResp(vector<Packet>& out) {
 	protocol = parser->message.protocol_type;
 	if (parser->message.payload.size() < 1)
 		return false;
@@ -34,16 +34,19 @@ bool Responder::getResp(pcpp::Packet& out) {
 	return hasResp;
 }
 
-void Responder::parseLan(Packet& packet) {
-
+void Responder::parseLan(vector<Packet>& packets) {
+	
 	switch (msgType)
 	{
 	case Lan::BROWSE_REQ:
-		lan.craftBrowseRep(packet);
-		lan.craftBrowseReq(packet);
+		
+		//lan.craftBrowseRep(packet);
+		packets.push_back(lan.craftBrowseReq());
+		packets.push_back(lan.craftKeepAlive());
 		break;
 	case Lan::BROWSE_REP:
-		lan.craftHostReq(packet);
+		packets.push_back(lan.craftKeepAlive());
+		packets.push_back(lan.craftHostReq());
 		break;
 	case Lan::GET_HOST_REP:
 		exit(1);

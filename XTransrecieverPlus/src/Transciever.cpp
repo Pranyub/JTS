@@ -17,12 +17,13 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Packet packet = Packet(rawPacket);
 	Parser *parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
-	Packet out;
+	vector<Packet> outVector;
 	
 	if (parser->onPacket(packet)) {
 		
-		if (responder->getResp(out)) {
-			dev->sendPacket(&out);
+		if (responder->getResp(outVector)) {
+			for(Packet out : outVector)
+				dev->sendPacket(&out);
 
 		}
 		

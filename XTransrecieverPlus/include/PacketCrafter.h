@@ -43,11 +43,11 @@ namespace crft {
 
 		}
 		Lan() {}
-		void craftBrowseReq(pcpp::Packet& in);
-		void craftBrowseRep(pcpp::Packet& in);
-		void craftHostReq(pcpp::Packet& in);
+		pcpp::Packet craftBrowseReq();
+		pcpp::Packet craftBrowseRep();
+		pcpp::Packet craftHostReq();
 		//void craftSessReq(pcpp::Packet& in);
-		//void craftKeepAlv(pcpp::Packet& in);
+		pcpp::Packet craftKeepAlive();
 	};
 	
 };
