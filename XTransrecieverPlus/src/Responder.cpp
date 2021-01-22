@@ -13,10 +13,10 @@ void Responder::setParser(Parser& parserIn) {
 }
 
 bool Responder::getResp(vector<Packet>& out) {
-	protocol = parser->message.protocol_type;
-	if (parser->message.payload.size() < 1)
+	protocol = parser->recv_message.protocol_type;
+	if (parser->recv_message.payload.size() < 1)
 		return false;
-	msgType = parser->message.payload[0];
+	msgType = parser->recv_message.payload[0];
 	hasResp = true;
 	
 	if (stage == HANDSHAKE) {

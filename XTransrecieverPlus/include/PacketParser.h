@@ -24,7 +24,7 @@ public:
 
 	Parser(const Parser& parserOld) {
 		//raw.clear();
-		message.payload.clear();
+		recv_message.payload.clear();
 	}
 
 	int test = 4;
@@ -44,13 +44,14 @@ public:
 		uint16_t packetID = 0;
 		//nonceCounter in integer form
 		uint64_t nonce = 1;
+		std::vector<uint8_t> headerNonce; //only used in packet decryption
 		std::array<uint8_t, 16> tag;
 		
 		//takes an iterator pointing at the beginning of PIA Header and sets values
 		//passing an iter by reference is a bit wonky so its done by value instead
 		std::vector<uint8_t>::iterator fill(std::vector<uint8_t>::iterator iter);
 		std::vector<uint8_t> set();
-	} header;
+	} recv_header;
 
 	struct Message {
 		//header data
@@ -71,7 +72,7 @@ public:
 
 		//appends header to given vector
 		void appendHeader(std::vector<uint8_t>* data);
-	} message;
+	} recv_message;
 
 	struct CryptoChallenge {
 		uint8_t version = 2;
@@ -95,7 +96,7 @@ public:
 		//uses the DECRYPTED challenge and returns the full challenge response. Session param not included.
 		std::vector<uint8_t> makeResponse();
 
-	} browseReply{&header.nonce};
+	} browseReply{&recv_header.nonce};
 
 	//const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
 	std::vector<uint8_t>* raw;

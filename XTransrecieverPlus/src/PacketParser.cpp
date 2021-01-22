@@ -15,7 +15,7 @@ using namespace util;
 
 bool Parser::onPacket(Packet packet) {
 	
-	resetAll();
+	//resetAll();
 
 	UdpLayer* udpLayer = packet.getLayerOfType<UdpLayer>();
 	IPv4Layer* ipv4Layer = packet.getLayerOfType<IPv4Layer>();
@@ -63,22 +63,22 @@ bool Parser::onPacket(Packet packet) {
 bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 	//Check if header matches
 	for (int i = 0x00; i < 0x04; i++) {
-		if (piaMsg[i] != header.magic[i])
+		if (piaMsg[i] != recv_header.magic[i])
 			return false;
 	}
 
 	vector<uint8_t>::iterator iter = piaMsg.begin() + 5;
-	iter = header.fill(iter);
+	iter = recv_header.fill(iter);
 
 	//The encrypted packet without unencrypted header
 	vector<uint8_t> enc;
-	while (iter < piaMsg.end())
+	while (iter != piaMsg.end())
 		enc.push_back(*iter++);
 
 
 	vector<uint8_t> dec;
 	if(DecryptPia(enc, &dec))
-		message.setMessage(dec);
+		recv_message.setMessage(dec);
 	
 	return true;
 }
@@ -87,8 +87,8 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 vector<uint8_t>::iterator Parser::PIAHeader::fill(vector<uint8_t>::iterator iter) {
 	connID = *iter++;
 	packetID = convertType(iter, 2); iter += 2;
-	vector<uint8_t> nonceCounter = NumToVector(nonce, sizeof(nonce));
-	copy(iter, iter + 8, nonceCounter.data()); iter += 8;
+	headerNonce.resize(8);
+	copy(iter, iter + 8, headerNonce.data()); iter += 8;
 	copy(iter, iter + 16, tag.data()); iter += 16;
 
 	return iter;
@@ -280,7 +280,7 @@ vector<uint8_t> Parser::CryptoChallenge::makeResponse() {
 bool Parser::parseBrowseRequest() {
 	if (udpInfo.message_len != 873) { return false; } //Safety check; all browse request packets are 1360 bytes long
 	
-	message.protocol_type = LAN;
+	recv_message.protocol_type = LAN;
 
 	array<uint8_t, 12> challengeNonce;
 	array<uint8_t, 16>* challengeKey = &browseReply.challengeKey;
@@ -311,8 +311,8 @@ bool Parser::parseBrowseRequest() {
 	EVP_DecryptFinal_ex(ctx, decrypted.data() + decrypted.size(), &len);
 	EVP_CIPHER_CTX_free(ctx);
 	
-	message.payload.assign(raw->begin(), raw->end());
-	message.payload_size = decrypted.size();
+	recv_message.payload.assign(raw->begin(), raw->end());
+	recv_message.payload_size = decrypted.size();
 	
 	browseReply.challenge.assign(decrypted.begin(), decrypted.end());
 	return true;
@@ -325,9 +325,9 @@ bool Parser::parseBrowseReply() {
 	//Checking for a matching session id is not yet implemented, so some errors may arise
 	//when attempting to use this program in a room with more than two switches
 
-	message.protocol_type = LAN;
-	message.payload.assign(raw->begin(), raw->end());
-	message.payload_size = udpInfo.message_len;
+	recv_message.protocol_type = LAN;
+	recv_message.payload.assign(raw->begin(), raw->end());
+	recv_message.payload_size = udpInfo.message_len;
 
 	uint8_t session_param[32];
 	for (int i = 0; i < 32; i++) {
@@ -356,45 +356,38 @@ void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the give
 	for (int i = 0; i < 16; i++) {
 		sessionKey[i] = session_key_ext[i];
 	}
-	for (int i = 0; i < 32; i++)
-		printf("%02x", mod_param[i]);
-	printf("\n");
+	
 	decryptable = true;
 }
 
 bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t> *decrypted) {
 	
 	//If this bit is set the packet isn't encrypted
-	if (header.version >> 7 == 0)
+	if (recv_header.version >> 7 == 0)
 		return true;
 	else if (!decryptable)
 		return false; //Cannot decrypt if sessionKey isn't set
 
-
-	vector<uint8_t> nonceCounter = NumToVector(header.nonce, sizeof(header.nonce));
 	uint8_t nonce[12];
 
 
 	//Set the nonce with the source ip and nonce counter
 	for (int i = 0; i < 4; i++)
 		nonce[i] = (udpInfo.srcIP >> (24 - i * 8) & 0xFF);
-	nonce[4] = header.connID;
+	nonce[4] = recv_header.connID;
 	for (int i = 1; i < 8; i++) {
-		nonce[i + 4] = nonceCounter[i];
+		nonce[i + 4] = recv_header.headerNonce[i];
 	}
 
 	int decrypted_len;
 	decrypted->resize(encrypted.size(), 0);
-
+	
 	//Start decryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
 	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), nonce);
 	EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size());
-	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, header.tag.data());
-
-
-	
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, recv_header.tag.data());
 
 	if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) == 0) {
 		EVP_CIPHER_CTX_free(ctx);
@@ -403,6 +396,9 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 
 	EVP_CIPHER_CTX_free(ctx);
 
+	for (int i : *decrypted)
+		printf("%02x", i);
+	printf("\n");
 	return true;
 
 }
