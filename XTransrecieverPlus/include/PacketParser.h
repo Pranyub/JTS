@@ -2,9 +2,10 @@
 #include <vector>
 #include <array>
 #include <Packet.h>
-
+#include "Util.h"
 enum PROTOCOL {
-	LAN = 0x44
+	LAN = 0x44,
+	STATION = 0x14
 };
 
 enum PacketTypes {
@@ -85,10 +86,13 @@ public:
 		std::array<uint8_t, 16> challengeTag;
 		std::vector<uint8_t> challenge;
 
-		CryptoChallenge() {}
+		CryptoChallenge() {
+			util::HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
+		}
 
 		CryptoChallenge(uint64_t* setNonce) {
 			nonce = setNonce;
+			util::HexToVector("98408530300f066d20cf8fafa062cd87", &selfKey);
 		}
 
 		bool parseChallenge(std::vector<uint8_t> raw, std::array<uint8_t, 12>* challengeNonce);

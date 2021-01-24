@@ -10,6 +10,7 @@ using namespace crft;
 void Responder::setParser(Parser& parserIn) {
 	parser = &parserIn;
 	lan = Lan(parser);
+	station = Station(parser);
 }
 
 bool Responder::getResp(vector<Packet>& out) {
@@ -25,6 +26,9 @@ bool Responder::getResp(vector<Packet>& out) {
 		case LAN:
 			parseLan(out);
 			break;
+		case STATION:
+			if (msgType == Station::CONN_REQ)
+				exit(1);
 		default:
 			hasResp = false;
 			break;
@@ -40,7 +44,7 @@ void Responder::parseLan(vector<Packet>& packets) {
 	{
 	case Lan::BROWSE_REQ:
 		
-		//lan.craftBrowseRep(packet);
+		packets.push_back(lan.craftBrowseRep());
 		packets.push_back(lan.craftBrowseReq());
 		packets.push_back(lan.craftKeepAlive());
 		break;
@@ -49,7 +53,9 @@ void Responder::parseLan(vector<Packet>& packets) {
 		packets.push_back(lan.craftHostReq());
 		break;
 	case Lan::GET_HOST_REP:
-		exit(1);
+		packets.push_back(lan.craftKeepAlive());
+		packets.push_back(station.craftConnReq());
+		printf("\nHERE!!!!!!!!!\n\n\n");
 	default:
 		hasResp = false;
 		break;
