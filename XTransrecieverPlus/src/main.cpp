@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 	Reader r;
 	Tx tx;
 
-	const string path = "D:\\ninjhax\\main\\Documents - HDD\\GitHub\\XTransrecieverPlus\\packets\\";
+	const string path = "D:/ninjhax/main/Documents - HDD/GitHub/XTransrecieverPlus/packets/";
 	if (!cfg::is_live)
 		r.Start(path + cfg::fileName);
 	else {
