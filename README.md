@@ -1,2 +1,1 @@
-# JTS
-Jank Trading System
+# XTransrecieverPlus

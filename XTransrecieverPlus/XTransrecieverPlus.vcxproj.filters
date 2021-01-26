@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Reader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PacketParser.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Util.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Transciever.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PacketCrafter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Responder.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="header">
+      <UniqueIdentifier>{a8fb53f2-2838-4333-b3d2-fbdfe486918e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{8584ec65-229a-46b4-857f-9d4882fc21fb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Reader.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Config.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PacketParser.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Util.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Transciever.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PacketCrafter.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Responder.h">
+      <Filter>header</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
