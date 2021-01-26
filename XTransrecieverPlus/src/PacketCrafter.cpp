@@ -131,15 +131,17 @@ Packet crft::Station::craftConnReq() {
 	uint8_t inverse_cid = 0;
 
 	vector<uint8_t> data;
-	data.insert(data.end(), { conn_id, version, is_inverse });
+	data.insert(data.end(), { Station::CONN_REQ, conn_id, version, is_inverse });
 	vector<uint8_t> temp = NumToVector(pid, sizeof(pid));
 	data.insert(data.end(), temp.begin(), temp.end());
 
-	HexToVector("020600000a0d3a7ac0030000000000000a0d3a7a0000c003e506244a3a7ac00300000001", &data); //lazy approach to stationlocation
-	HexToVector("d9fe4fba000000", &data); //lazy approach to ack id
+	HexToVector("553c80b900020600000a0000e0c0030000000000000a0000e00000c003e506244a00e0c00300000001", &data); //lazy approach to stationlocation
+	HexToVector("d9fe4fba", &data); //lazy approach to ack id
+	message.appendHeader(&data);
+	HexToVector("000000", &data);
 	
 	vector<uint8_t> out;
-	message.appendHeader(&data);
+	
 	printf("SENT: ");
 	for (int i : data)
 		printf("%02x", i);

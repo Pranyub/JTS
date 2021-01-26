@@ -27,8 +27,8 @@ bool Responder::getResp(vector<Packet>& out) {
 			parseLan(out);
 			break;
 		case STATION:
-			if (msgType == Station::CONN_REQ)
-				exit(1);
+			printf("\n%02", msgType);
+			exit(1);
 		default:
 			hasResp = false;
 			break;

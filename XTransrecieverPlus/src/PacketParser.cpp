@@ -338,7 +338,7 @@ bool Parser::parseBrowseReply() {
 	setSessionKey(session_param); //This is all we care about
 
 	for (int i = 0; i < 4; i++) {
-		sessionID[i] = raw->at(i + 9);
+		sessionID[i] = raw->at(i + 9); //This too I guess
 	}
 	return true;
 }

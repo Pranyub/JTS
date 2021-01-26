@@ -101,6 +101,8 @@ namespace crft {
 
 		}
 		Lan() {}
+
+
 		pcpp::Packet craftBrowseReq();
 		pcpp::Packet craftBrowseRep();
 		pcpp::Packet craftHostReq();
@@ -118,7 +120,8 @@ namespace crft {
 		};
 
 		Station(Parser* parserIn) : PiaPacket(parserIn) {
-			message.protocol_type = LAN;
+			message.protocol_type =	STATION;
+			message.msg_flag = 0x01;
 		}
 		Station() {};
 		pcpp::Packet craftConnReq();
