@@ -66,7 +66,7 @@ public:
 
 		std::vector<uint8_t> payload;
 		//parses a PIA Message from a raw input
-		int setMessage(std::vector<uint8_t> data);
+		int setMessage(std::vector<uint8_t> data, int offset=0);
 
 		//returns a Message vector from values
 		std::vector<uint8_t> getMessage();
@@ -74,6 +74,8 @@ public:
 		//appends header to given vector
 		void appendHeader(std::vector<uint8_t>* data);
 	} recv_message;
+	
+	vector<Message> messageVector;
 
 	struct CryptoChallenge {
 		uint8_t version = 2;

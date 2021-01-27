@@ -31,8 +31,6 @@ bool Parser::onPacket(Packet packet) {
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
 	udpInfo.dstPort = (int)udpLayer->getUdpHeader()->portDst;
 	
-	if (udpInfo.srcIP != cfg::switchIPAddrInt && cfg::is_live==true)
-		return false;
 
 	//Initialize raw with the payload data
 	raw = new vector<uint8_t>;
@@ -77,9 +75,13 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 
 
 	vector<uint8_t> dec;
-	if(DecryptPia(enc, &dec))
-		recv_message.setMessage(dec);
 	
+	if (DecryptPia(enc, &dec)) {
+		int offset = 0;
+		while (offset > dec.size())
+			offset = recv_message.setMessage(dec, offset);
+			messageVector.push_back(recv_message);
+	}
 	return true;
 }
 
@@ -109,8 +111,8 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 }
 
 
-int Parser::Message::setMessage(vector<uint8_t> data) {
-	vector<uint8_t>::iterator iter = data.begin();
+int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
+	vector<uint8_t>::iterator iter = data.begin() + offset;
 	
 	
 	field_flags = *iter++;

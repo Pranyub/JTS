@@ -24,8 +24,10 @@ namespace crft {
 		PiaPacket(Parser* parserIn);
 		PiaPacket();
 	protected:
-		pcpp::Packet craftPacket(std::vector<uint8_t> data, int srcPort, int dstPort, int dstIP = 0x0a0000ff /*broadcast by default*/);
+		pcpp::Packet craftPacket(Packet recieved, vector<uint8_t> data);
 	};
+
+	//All data structures are unused
 
 	struct InetAddress {
 		std::array<uint8_t, 16> addr;

@@ -24,33 +24,16 @@ crft::PiaPacket::PiaPacket() {
 	header.version = 0x84;
 }
 
-Packet crft::PiaPacket::craftPacket(vector<uint8_t> data, int srcPort, int dstPort, int dstIP) {
+Packet crft::PiaPacket::craftPacket(Packet recieved, vector<uint8_t> data) {
 	
-	Packet out;
-	MacAddress dstMac;
-	if (dstIP == 0x0a0000ff)
-		dstMac = MacAddress("ff:ff:ff:ff:ff:ff");
-	else
-		dstMac = MacAddress("7c:bb:8a:d5:52:bb");
-
-	EthLayer eth(MacAddress("7c:bb:8a:dd:55:bb"), dstMac);
-	out.addLayer(&eth);
-	IPv4Layer ip;
-	ip.getIPv4Header()->ipSrc = IPv4Address(string(interfaceIPAddr)).toInt();
-	ip.getIPv4Header()->ipDst = htonl(dstIP);
-	ip.getIPv4Header()->ipId = htons(2000);
-	ip.getIPv4Header()->timeToLive = 64;
-	out.addLayer(&ip);
-
-	UdpLayer udp(srcPort, dstPort);
-	out.addLayer(&udp);
-
-	PayloadLayer payload(data.data(), data.size(), true);
-	out.addLayer(&payload);
+	Packet out = recieved;
+	
+	PayloadLayer* payload = out.getLayerOfType<PayloadLayer>();
+	payload->setPayload(data.data(), data.size());
 	out.computeCalculateFields();
 	return out;
 }
-
+/*
 Packet crft::Lan::craftBrowseReq() {
 
 	//lazy approach
@@ -149,3 +132,4 @@ Packet crft::Station::craftConnReq() {
 	parser->EncryptPia(data, &out, header);
 	return craftPacket(out, 49155, 49152);
 }
+*/
