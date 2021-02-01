@@ -75,7 +75,7 @@ public:
 		void appendHeader(std::vector<uint8_t>* data);
 	} recv_message;
 	
-	vector<Message> messageVector;
+	std::vector<Message> messageVector;
 
 	struct CryptoChallenge {
 		uint8_t version = 2;

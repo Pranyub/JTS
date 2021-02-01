@@ -18,20 +18,21 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Parser *parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
 	vector<Packet> outVector;
+
+	cookie->packet = packet;
+	cookie->isReady = true;
 	
 	if (parser->onPacket(packet)) {
 		
 		if (responder->getResp(outVector)) {
-			for(Packet out : outVector)
-				dev->sendPacket(&out);
-
 		}
 		
 	}
 }
 
 
-void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter) {
+
+void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary) {
 
 	dev = PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr.c_str());
 
@@ -51,7 +52,12 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 		printf("Cannot set filter '%s'\n", searchfilter);
 		exit(1);
 	}
-	Cookie cookie;
+	
+	if (!secondary)
+		dev->setFilter(IPFilter(switchIPAddr, SRC));
+	else
+		dev->setFilter(IPFilter("10.0.0.62", SRC));
+
 	cookie.responder.setParser(cookie.parser);
 	dev->startCapture(onPacket, &cookie);
 }

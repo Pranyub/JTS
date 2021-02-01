@@ -24,7 +24,7 @@ namespace crft {
 		PiaPacket(Parser* parserIn);
 		PiaPacket();
 	protected:
-		pcpp::Packet craftPacket(Packet recieved, vector<uint8_t> data);
+		pcpp::Packet craftPacket(pcpp::Packet recieved, vector<uint8_t> data);
 	};
 
 	//All data structures are unused

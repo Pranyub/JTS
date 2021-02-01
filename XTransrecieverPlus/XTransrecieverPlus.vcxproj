@@ -22,7 +22,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PacketCrafter.cpp" />
     <ClCompile Include="src\PacketParser.cpp" />
-    <ClCompile Include="src\Reader.cpp" />
     <ClCompile Include="src\Responder.cpp" />
     <ClCompile Include="src\Transciever.cpp" />
     <ClCompile Include="src\Util.cpp" />
@@ -31,7 +30,6 @@
     <ClInclude Include="include\Config.h" />
     <ClInclude Include="include\PacketCrafter.h" />
     <ClInclude Include="include\PacketParser.h" />
-    <ClInclude Include="include\Reader.h" />
     <ClInclude Include="include\Responder.h" />
     <ClInclude Include="include\Transciever.h" />
     <ClInclude Include="include\Util.h" />
