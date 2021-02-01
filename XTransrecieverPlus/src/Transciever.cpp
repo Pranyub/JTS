@@ -56,7 +56,7 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 	if (!secondary)
 		dev->setFilter(IPFilter(switchIPAddr, SRC));
 	else
-		dev->setFilter(IPFilter("10.0.0.62", SRC));
+		dev->setFilter(NotFilter(&IPFilter(switchIPAddr, SRC)));
 
 	cookie.responder.setParser(cookie.parser);
 	dev->startCapture(onPacket, &cookie);
