@@ -23,10 +23,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	cookie->isReady = true;
 	
 	if (parser->onPacket(packet)) {
-		
-		if (responder->getResp(outVector)) {
-		}
-		
+		//TODO: Add check pokemon method		
 	}
 }
 
@@ -53,6 +50,7 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 		exit(1);
 	}
 	
+	//This is to prevent feedback; only search for switchIP on primary interface, and ignore switchIP on secondary.
 	if (!secondary)
 		dev->setFilter(IPFilter(switchIPAddr, SRC));
 	else
