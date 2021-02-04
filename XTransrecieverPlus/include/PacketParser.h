@@ -14,6 +14,7 @@ enum PacketTypes {
 	BROWSE_REPLY = 1
 };
 
+//Game-Specific key used for packet encryption
 const uint8_t GAME_KEY[16] = { 0x70, 0x31, 0x66, 0x72, 0x58, 0x71, 0x78, 0x6d, 0x65, 0x43, 0x5a, 0x57, 0x46, 0x76, 0x30, 0x58 };
 
 class Parser {
@@ -112,19 +113,19 @@ public:
 	std::array<uint8_t, 4> sessionID;
 	std::array<uint8_t, 16> sessionKey; //key used for decryption
 
-	//Start parsing
+	//Start parsing a given packet - creates a PiaHeader & PiaMessages
 	bool onPacket(pcpp::Packet packet);
 
-	//encrypts a packet with sessionKey and applies a given PIAHeader.
+	//encrypts a packet with sessionKey and applies a given PIAHeader to the output
 	bool EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* encrypted, PIAHeader header_self);
 
 	void resetAll();
 private:
 
-	
+	//parses a PIA Packet into a PIA Header and PIA Messages
 	bool parsePia(std::vector<uint8_t> piaMsg);
 	
-	//decrypts a given packet with sessionKey
+	//decrypts a given packet with sessionKey. Returns decrypted messages (raw data)
 	bool DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_t>* decrypted);
 
 	bool parseBrowseRequest();

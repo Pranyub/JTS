@@ -14,18 +14,23 @@ using namespace std;
 using namespace util;
 
 bool Parser::onPacket(Packet packet) {
-	
-	//resetAll();
 
+	//The raw packet data (payload only)
+	raw = new vector<uint8_t>;
+
+	//Get info from packet
 	UdpLayer* udpLayer = packet.getLayerOfType<UdpLayer>();
 	IPv4Layer* ipv4Layer = packet.getLayerOfType<IPv4Layer>();
 	PayloadLayer* payloadLayer = packet.getLayerOfType<PayloadLayer>();
 	
+	//make sure all fields are set, if they aren't, then quit
 	if (udpLayer == nullptr || payloadLayer == nullptr || ipv4Layer == nullptr)
 		return false;
 	
 	uint8_t* message_pointer = payloadLayer->getData();
 	udpInfo.message_len = payloadLayer->getDataLen();
+	
+	//sender data
 	udpInfo.srcIP = ntohl(ipv4Layer->getSrcIpAddress().toInt());
 	udpInfo.dstIP = ntohl(ipv4Layer->getDstIpAddress().toInt());
 	udpInfo.srcPort = (int)udpLayer->getUdpHeader()->portSrc;
@@ -33,14 +38,11 @@ bool Parser::onPacket(Packet packet) {
 	
 
 	//Initialize raw with the payload data
-	raw = new vector<uint8_t>;
-	for (int i = 0; i < udpInfo.message_len; i++) {
-		int a = *(message_pointer + i);
-	}
 	for (int i = 0; i < udpInfo.message_len; i++) {
 		raw->push_back(*(message_pointer + i));
 	}
 
+	//Differentiate PIA and BrowseRep/BrowseReq
 	switch (raw->at(0))
 	{
 	case PIA_MSG:
@@ -59,7 +61,8 @@ bool Parser::onPacket(Packet packet) {
 }
 
 bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
-	//Check if header matches
+
+	//Check if header matches. If it doesn't, then quit.
 	for (int i = 0x00; i < 0x04; i++) {
 		if (piaMsg[i] != recv_header.magic[i])
 			return false;
@@ -414,17 +417,21 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	header_self.nonce += 1;
 	vector<uint8_t> nonceCounter = NumToVector(header_self.nonce, sizeof(header_self.nonce));
 
+	//Set the encryption nonce
 	vector<uint8_t> nonce;
-	nonce.push_back(0x0a);
-	nonce.push_back(0x00);
-	nonce.push_back(0x00);
-	nonce.push_back(0xe0);
+
+	for (int i = 3; i >= 0; i--)
+		nonce.push_back((uint8_t)(udpInfo.srcIP >> 8 * i) & 0xff);
+
 	nonce.push_back(header_self.connID);
+
 	for (int i=1; i < 8; i++)
 		nonce.push_back(nonceCounter[i]);
 
+
 	encrypted->resize(decrypted.size());
 	int enc_len;
+
 	//Start encryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);

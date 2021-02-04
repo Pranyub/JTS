@@ -25,6 +25,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
+	parser->resetAll();
 }
 
 

@@ -27,6 +27,8 @@ void doProxy(TranscieverData* transciever) {
 int main(int argc, char* argv[])
 {
 
+	//JANK TRADING SYSTEM
+
 	TranscieverData transciever1;
 	TranscieverData transciever2;
 
