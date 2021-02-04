@@ -43,19 +43,20 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 		printf("Cannot open device\n");
 		exit(1);
 	}
+	string filter = searchfilter;
+	//This is to prevent feedback; only search for switchIP on primary interface, and ignore switchIP on secondary.
+	if (secondary)
+		filter.append(" and (not (ip and src net 10.13.0.224))");
+	else
+		filter.append(" and (ip and src net 10.13.0.224)");
 
-	if (!dev->setFilter(searchfilter))
+	if (!dev->setFilter(filter))
 	{
-		printf("Cannot set filter '%s'\n", searchfilter);
+		printf("Cannot set filter '%s'\n", filter);
 		exit(1);
 	}
 	
-	//This is to prevent feedback; only search for switchIP on primary interface, and ignore switchIP on secondary.
-	if (!secondary)
-		dev->setFilter(IPFilter(switchIPAddr, SRC));
-	else
-		dev->setFilter(NotFilter(&IPFilter(switchIPAddr, SRC)));
-
+	
 	cookie.responder.setParser(cookie.parser);
 	dev->startCapture(onPacket, &cookie);
 }
