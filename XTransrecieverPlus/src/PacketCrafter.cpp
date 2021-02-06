@@ -129,11 +129,7 @@ Packet crft::Station::craftConnReq() {
 	HexToVector("000000", &data);
 	
 	vector<uint8_t> out;
-	
-	printf("SENT: ");
-	for (int i : data)
-		printf("%02x", i);
-	printf("\n");
+
 	parser->EncryptPia(data, &out, header);
 	Packet p;
 	return p;

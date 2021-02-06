@@ -19,12 +19,14 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Responder* responder = &cookie->responder;
 	vector<Packet> outVector;
 
-	cookie->packet = packet;
-	cookie->isReady = true;
-	
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
+
+	cookie->packet = packet;
+	cookie->isReady = true;
+	
+	
 	parser->resetAll();
 }
 
@@ -33,6 +35,8 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary) {
 
 	dev = PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr.c_str());
+
+	
 
 	if (dev == NULL)
 	{
@@ -47,9 +51,9 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 	string filter = searchfilter;
 	//This is to prevent feedback; only search for switchIP on primary interface, and ignore switchIP on secondary.
 	if (secondary)
-		filter.append(" and (not (ip and src net 10.13.0.224))");
+		filter.append(" and (not (ip and src net " + switchIPAddr + "))");
 	else
-		filter.append(" and (ip and src net 10.13.0.224)");
+		filter.append(" and (ip and src net " + switchIPAddr +  ")");
 
 	if (!dev->setFilter(filter))
 	{

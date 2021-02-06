@@ -401,9 +401,6 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 
 	EVP_CIPHER_CTX_free(ctx);
 
-	for (int i : *decrypted)
-		printf("%02x", i);
-	printf("\n");
 	return true;
 
 }

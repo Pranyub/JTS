@@ -15,7 +15,7 @@ struct TranscieverData {
 void doProxy(TranscieverData* transciever) {
 	while (true) {
 		if (transciever->rx->cookie.isReady) {
-			printf("HERE\n");
+			printf("{%08x}\n", transciever->rx->cookie.parser.udpInfo.srcIP);
 			pcpp::Packet out;
 			transciever->rx->cookie.getPacket(out);
 			transciever->tx.dev->sendPacket(&out);
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	transciever2.packet = &transciever1.tx.cookie.packet;
 	transciever1.rx = &transciever2.tx;
 	transciever2.rx = &transciever1.tx;
-	thread thread1(doProxy, &transciever1);    // spawn new thread that calls foo()
+	thread thread1(doProxy, &transciever1);	
 	thread thread2(doProxy, &transciever2);
 	
 	while (true);
