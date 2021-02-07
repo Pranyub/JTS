@@ -24,7 +24,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
-	printf("{%08x}\n", parser->udpInfo.srcIP);
+	//printf("{%08x}\n", parser->udpInfo.srcIP);
 	cookie->output->sendPacket(&packet);
 	
 	
@@ -33,7 +33,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 
 
 
-void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary) {
+Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary) {
 
 	dev = PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr.c_str());
 
@@ -64,5 +64,9 @@ void Tx::Start(const std::string interfaceIPAddr, const std::string switchIPAddr
 	
 	
 	cookie.responder.setParser(cookie.parser);
+	
+}
+
+void Tx::Start() {
 	dev->startCapture(onPacket, &cookie);
 }

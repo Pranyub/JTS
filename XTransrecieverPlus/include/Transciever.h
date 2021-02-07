@@ -23,5 +23,8 @@ public:
 	
 
 	pcpp::PcapLiveDevice* dev;
-	void Start(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary=false);
+	
+	Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary=false);
+	
+	void Start();
 };
