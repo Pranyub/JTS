@@ -7,6 +7,8 @@ public:
 	struct Cookie {
 		Parser parser;
 		Responder responder;
+		pcpp::PcapLiveDevice* output;
+
 		void getPacket(pcpp::Packet& in) {
 			isReady = false;
 			in = packet;

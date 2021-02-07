@@ -17,14 +17,15 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Packet packet = Packet(rawPacket);
 	Parser *parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
+
+
 	vector<Packet> outVector;
 
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
-
-	cookie->packet = packet;
-	cookie->isReady = true;
+	printf("{%08x}\n", parser->udpInfo.srcIP);
+	cookie->output->sendPacket(&packet);
 	
 	
 	parser->resetAll();
