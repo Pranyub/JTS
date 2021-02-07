@@ -24,7 +24,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
-	//printf("{%08x}\n", parser->udpInfo.srcIP);
+	printf("{%08x}\n", parser->udpInfo.srcIP);
 	cookie->output->sendPacket(&packet);
 	
 	
@@ -37,6 +37,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 
 	dev = PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr.c_str());
 
+	printf("%s\n", dev->getName());
 	
 
 	if (dev == NULL)
