@@ -5,6 +5,7 @@
 #include <IPv4Layer.h>
 #include <PayloadLayer.h>
 #include <UdpLayer.h>
+#include <EthLayer.h>
 #include <PlatformSpecificUtils.h>
 
 using namespace pcpp;
@@ -24,7 +25,8 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
-	printf("{%08x}\n", parser->udpInfo.srcIP);
+	printf("{%08s}\n", cookie->output->getMacAddress().toString().c_str());
+	packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
 	cookie->output->sendPacket(&packet);
 	
 	
