@@ -43,7 +43,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 
 	dev = PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr.c_str());
 
-	printf("%s\n", dev->getName());
+	
 	
 
 	if (dev == NULL)
@@ -51,6 +51,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 		printf("Cannot find interface with IPv4 address of '%s'\n", interfaceIPAddr.c_str());
 		exit(1);
 	}
+
 	if (!dev->open())
 	{
 		printf("Cannot open device\n");
@@ -69,6 +70,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 		exit(1);
 	}
 	
+	printf("%s\n", dev->getName());
 	
 	cookie.responder.setParser(cookie.parser);
 	cookie.isSecondary = secondary;
