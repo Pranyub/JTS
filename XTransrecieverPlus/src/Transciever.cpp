@@ -25,8 +25,12 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		//TODO: Add check pokemon method		
 	}
-	printf("{%08s}\n", cookie->output->getMacAddress().toString().c_str());
-	packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
+	printf("{%s} | %s\n", MacAddress("14:c0:3e:5c:82:34").toString().c_str(), cookie->isSecondary ? "True" : "False");
+	if(cookie->isSecondary)
+		packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
+	else
+		packet.getLayerOfType<EthLayer>()->setSourceMac(dev->getMacAddress());
+	packet.computeCalculateFields();
 	cookie->output->sendPacket(&packet);
 	
 	
@@ -67,7 +71,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 	
 	
 	cookie.responder.setParser(cookie.parser);
-	
+	cookie.isSecondary = secondary;
 }
 
 void Tx::Start() {

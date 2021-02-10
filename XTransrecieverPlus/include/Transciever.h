@@ -8,6 +8,9 @@ public:
 		Parser parser;
 		Responder responder;
 		pcpp::PcapLiveDevice* output;
+		pcpp::MacAddress macAddress;
+
+		bool isSecondary;
 
 		void getPacket(pcpp::Packet& in) {
 			isReady = false;
