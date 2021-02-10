@@ -21,6 +21,9 @@ int main(int argc, char* argv[])
 	tx1.cookie.output = tx2.dev;
 	tx2.cookie.output = tx1.dev;
 
+	tx1.cookie.otherSwitchMac = &tx2.cookie.selfSwitchMac;
+	tx2.cookie.otherSwitchMac = &tx1.cookie.selfSwitchMac;
+
 	tx1.Start();
 	tx2.Start();
 

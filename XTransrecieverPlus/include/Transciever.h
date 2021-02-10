@@ -8,7 +8,8 @@ public:
 		Parser parser;
 		Responder responder;
 		pcpp::PcapLiveDevice* output;
-		pcpp::MacAddress macAddress;
+		pcpp::MacAddress selfSwitchMac;
+		pcpp::MacAddress* otherSwitchMac;
 
 		bool isSecondary;
 
@@ -30,4 +31,5 @@ public:
 	Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const std::string searchfilter, const bool secondary=false);
 	
 	void Start();
+
 };
