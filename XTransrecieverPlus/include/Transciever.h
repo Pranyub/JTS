@@ -8,7 +8,7 @@ public:
 		Parser parser;
 		Responder responder;
 		pcpp::PcapLiveDevice* output;
-		pcpp::MacAddress selfSwitchMac;
+		pcpp::MacAddress selfSwitchMac{"SOMETHING INVALID"};
 		pcpp::MacAddress* otherSwitchMac;
 
 		bool isSecondary;

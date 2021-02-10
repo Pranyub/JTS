@@ -30,13 +30,14 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 
 	EthLayer* eth = packet.getLayerOfType<EthLayer>();
 
-	if (!cookie->selfSwitchMac.isValid())
+	if (!cookie->selfSwitchMac.isValid()) {
 		cookie->selfSwitchMac = eth->getSourceMac();
-
+		printf("GOT DST: {%s}\n", eth->getSourceMac().toString().c_str());
+	}
 	if (eth->getDestMac() != MacAddress("ff:ff:ff:ff:ff:ff"))
 		eth->setDestMac(*cookie->otherSwitchMac);
 
-	printf("{%s} | %s\n", eth->getSourceMac().toString().c_str(), cookie->isSecondary ? "True" : "False");
+	printf("{%s} -> {%s} | %s\n", eth->getSourceMac().toString().c_str(), eth->getDestMac().toString().c_str(), cookie->isSecondary ? "True" : "False");
 	if(cookie->isSecondary)
 		packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
 	else
