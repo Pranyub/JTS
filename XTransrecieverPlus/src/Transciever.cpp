@@ -42,6 +42,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 		packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
 	else
 		packet.getLayerOfType<EthLayer>()->setSourceMac(dev->getMacAddress());
+
 	packet.computeCalculateFields();
 	cookie->output->sendPacket(&packet);
 	

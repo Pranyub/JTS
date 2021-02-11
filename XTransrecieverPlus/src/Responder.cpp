@@ -20,9 +20,10 @@ bool Responder::getResp(vector<Packet>& out) {
 	for (Parser::Message message : parser->messageVector) {
 		if (parser->recv_message.payload.size() < 1)
 			break;
-
+		msgType = parser->recv_message.payload[0];
 		if (protocol == 0x7c) {
-
+			if (msgType == 0x07)
+				printf("FOUND A 7!!!!!!! %02x%02x", parser->recv_message.payload[2], parser->recv_message.payload[3]);
 		}
 
 

@@ -81,9 +81,11 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 	
 	if (DecryptPia(enc, &dec)) {
 		int offset = 0;
-		while (offset > dec.size())
+		messageVector.clear();
+		while (offset > dec.size()) {
 			offset = recv_message.setMessage(dec, offset);
 			messageVector.push_back(recv_message);
+		}
 	}
 	return true;
 }
