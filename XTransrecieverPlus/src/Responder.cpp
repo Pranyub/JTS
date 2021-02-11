@@ -16,21 +16,26 @@ void Responder::setParser(Parser& parserIn) {
 bool Responder::getResp(vector<Packet>& out) {
 	
 	hasResp = false;
-
-	for (Parser::Message message : parser->messageVector) {
-		if (parser->recv_message.payload.size() < 1)
+	
+	for (int i = 0; i < parser->messageVector.size(); i++) {
+		
+		if (parser->messageVector[i].payload.size() < 1)
 			break;
-		msgType = parser->recv_message.payload[0];
+		protocol = parser->messageVector[i].protocol_type;
+		msgType = parser->messageVector[i].payload[0];
+		
+
 		if (protocol == 0x7c) {
-			if (msgType == 0x07)
-				printf("FOUND A 7!!!!!!! %02x%02x", parser->recv_message.payload[2], parser->recv_message.payload[3]);
+			//exit(1);
+			if (msgType == 0x07) {
+				printf("FOUND 7c:07!!!!! %02x%02x", parser->messageVector[i].payload[2], parser->messageVector[i].payload[3]);
+			}
+				
 		}
 
 
 	}
-	protocol = parser->recv_message.protocol_type;
-	
-	
+
 	
 	
 	

@@ -82,11 +82,26 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 	if (DecryptPia(enc, &dec)) {
 		int offset = 0;
 		messageVector.clear();
-		while (offset > dec.size()) {
+
+		for (int i : dec)
+			printf("%02x", i);
+		printf("\n");
+
+		while (offset < dec.size()) {
+
 			offset = recv_message.setMessage(dec, offset);
-			messageVector.push_back(recv_message);
+			if (offset == -1)
+				break;
+			else
+				messageVector.push_back(recv_message);
 		}
+		printf("\n");
+		
+		
 	}
+
+
+
 	return true;
 }
 
@@ -119,33 +134,46 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 	vector<uint8_t>::iterator iter = data.begin() + offset;
 	
-	
-	field_flags = *iter++;
-	//set all message header values according to the field flags
-	if (field_flags & 1)
-		msg_flag = *iter++;
-	if (field_flags & 2) {
-		payload_size = convertType(iter, 2);
-		iter += 2;
-	}
-	if (field_flags & 4) {
-		protocol_type = *iter++;
-		copy(iter, iter + 3, protocol_port);
-		iter += 3;
-	}
-	if (field_flags & 8) {
-		destination = convertType(iter, 8);
-		iter += 8;
-	}
-	if (field_flags & 16) {
-		source_station_id = convertType(iter, 8);
-		iter += 8;
+	try {
+		field_flags = *iter++;
+
+		//this might be padding
+		if (field_flags == 0xff || field_flags == 0x00)
+			return -1;
+
+		//set all message header values according to the field flags
+		if (field_flags & 1)
+			msg_flag = *iter++;
+		if (field_flags & 2) {
+			payload_size = convertType(iter, 2);
+			iter += 2;
+		}
+		if (field_flags & 4) {
+			protocol_type = *iter++;
+			copy(iter, iter + 3, protocol_port);
+			iter += 3;
+		}
+		printf("FOUND: %02x | ", protocol_type);
+		if (field_flags & 8) {
+			destination = convertType(iter, 8);
+			iter += 8;
+		}
+		if (field_flags & 16) {
+			source_station_id = convertType(iter, 8);
+			iter += 8;
+		}
+
+		vector<uint8_t> temp(payload_size);
+		for (int i = 0; i < payload_size; i++)
+			temp[i] = *iter++;
+		payload = temp;
 	}
 
-	vector<uint8_t> temp(payload_size);
-	for (int i = 0; i < payload_size; i++)
-		temp[i] = *iter++;
-	payload = temp;
+	catch (exception& e) {
+		printf("FOUND BAD PACKET\n");
+		return -1;
+	}
+
 	return iter - data.begin();
 }
 
@@ -457,4 +485,5 @@ void Parser::resetAll() {
 	delete(raw);
 	raw = nullptr;
 	udpInfo = udpInfoReset;
+	messageVector.clear();
 }

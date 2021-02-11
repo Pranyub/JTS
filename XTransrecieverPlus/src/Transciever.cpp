@@ -19,12 +19,13 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Parser *parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
 
-
 	
 
 	vector<Packet> outVector;
 
 	if (parser->onPacket(packet)) {
+		responder->setParser(*parser);
+		responder->getResp(outVector);
 		//TODO: Add check pokemon method		
 	}
 
@@ -37,7 +38,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (eth->getDestMac() != MacAddress("ff:ff:ff:ff:ff:ff"))
 		eth->setDestMac(*cookie->otherSwitchMac);
 
-	printf("{%s} -> {%s} | %s\n", eth->getSourceMac().toString().c_str(), eth->getDestMac().toString().c_str(), cookie->isSecondary ? "True" : "False");
+	//printf("{%s} -> {%s} | %s\n", eth->getSourceMac().toString().c_str(), eth->getDestMac().toString().c_str(), cookie->isSecondary ? "True" : "False");
 	if(cookie->isSecondary)
 		packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
 	else
