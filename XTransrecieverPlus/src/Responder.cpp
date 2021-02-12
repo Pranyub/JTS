@@ -29,7 +29,7 @@ bool Responder::getResp(vector<Packet>& out) {
 			if (msgType == 0x07) {
 				int offset = (uint16_t)parser->messageVector[i].payload[2] << 8 | parser->messageVector[i].payload[3];
 				if (offset > 0x160 && offset < 0x170) {
-					offset = parser->messageVector[i].payload_size - offset + 8;
+					offset = offset - 0x151;
 					printf("FOUND 7c:07!!!!! %02x%02x ", parser->messageVector[i].payload[offset], parser->messageVector[i].payload[offset + 1]);
 				}
 			}

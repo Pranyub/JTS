@@ -182,6 +182,10 @@ int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 			temp[i] = *iter++;
 	}
 	payload = temp;
+	
+	//safety check (is it necessary?)
+	if (payload.size() == 0)
+		payload.push_back(0xff);
 
 	printf("FOUND: %02x|%02x/%02x | ", field_flags, protocol_type, payload[0]);
 
