@@ -108,10 +108,15 @@ public:
 	//const uint8_t GAME_KEY[16] = { 112, 49, 102, 114, 88, 113, 120, 109, 101, 67, 90, 87, 70, 118, 48, 88 }; //Game specific key used for encryption
 	std::vector<uint8_t>* raw;
 
+	//decrypted data (no header)
+	std::vector<uint8_t> dec;
+
 	//Persistent variables
 	bool decryptable = false; //can't decrypt unless session key is set via setSessionKey()
 	std::array<uint8_t, 4> sessionID;
 	std::array<uint8_t, 16> sessionKey; //key used for decryption
+
+
 
 	//Start parsing a given packet - creates a PiaHeader & PiaMessages
 	bool onPacket(pcpp::Packet packet);

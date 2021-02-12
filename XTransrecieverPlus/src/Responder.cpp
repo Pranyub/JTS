@@ -13,6 +13,29 @@ void Responder::setParser(Parser& parserIn) {
 	station = Station(parser);
 }
 
+bool Responder::setPokemonRaw(vector<uint8_t> raw) {
+	if (raw.size() < 0x1af)
+		return false;
+	for (int i = 0; i < raw.size(); i++) {
+	
+		if (raw[i] == 0xd8) {
+			if (raw[i + 1] == 0x02) {
+				printf("FOUND POKEMON: ");
+				for (int j = 0; j < 0x159; j++)
+					printf("%02x", raw[i + j]);
+				printf("\n");
+				printf("WHOLE PACKET: ");
+				for (int j = 0; j < raw.size(); j++)
+					printf("%02x", raw[j]);
+				printf("\n\n");
+			}
+		}
+		
+	}
+
+	return true;
+}
+
 bool Responder::getResp(vector<Packet>& out) {
 	
 	hasResp = false;

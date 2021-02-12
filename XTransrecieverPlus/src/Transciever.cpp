@@ -25,7 +25,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 
 	if (parser->onPacket(packet)) {
 		responder->setParser(*parser);
-		responder->getResp(outVector);
+		responder->setPokemonRaw(parser->dec);
 		//TODO: Add check pokemon method		
 	}
 

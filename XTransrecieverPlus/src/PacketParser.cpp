@@ -77,21 +77,24 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 		enc.push_back(*iter++);
 
 
-	vector<uint8_t> dec;
+	
 	messageVector.clear();
 
 	if (DecryptPia(enc, &dec)) {
 		int offset = 0;
 
-		for (int i : dec)
+		/*for (int i : dec)
 			printf("%02x", i);
 		printf("\n");
+		*/
 
 		while (offset < dec.size()) {
 
 			offset = recv_message.setMessage(dec, offset);
 			if (offset == -1)
 				break;
+			else if (offset == -2)
+				offset++;
 			else
 				messageVector.push_back(recv_message);
 		}
@@ -146,7 +149,7 @@ int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 	//this might be pia message padding
 	if (field_flags == 0x00) {
 		printf("RETURN (MPAD) ");
-		return iter - data.begin();
+		return -2;
 	}
 
 	//not enough room for a message and probably junk (?)
@@ -187,7 +190,7 @@ int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 	if (payload.size() == 0)
 		payload.push_back(0xff);
 
-	printf("FOUND: %02x|%02x/%02x | ", field_flags, protocol_type, payload[0]);
+	printf("FOUND: {%02x|%d|%02x/%02x} | ", field_flags, payload_size, protocol_type, payload[0]);
 
 	return iter - data.begin();
 }
