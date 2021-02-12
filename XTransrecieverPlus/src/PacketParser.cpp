@@ -78,10 +78,10 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 
 
 	vector<uint8_t> dec;
-	
+	messageVector.clear();
+
 	if (DecryptPia(enc, &dec)) {
 		int offset = 0;
-		messageVector.clear();
 
 		for (int i : dec)
 			printf("%02x", i);
@@ -134,45 +134,56 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 	vector<uint8_t>::iterator iter = data.begin() + offset;
 	
-	try {
-		field_flags = *iter++;
 
-		//this might be padding
-		if (field_flags == 0xff || field_flags == 0x00)
-			return -1;
+	field_flags = *iter++;
 
-		//set all message header values according to the field flags
-		if (field_flags & 1)
-			msg_flag = *iter++;
-		if (field_flags & 2) {
-			payload_size = convertType(iter, 2);
-			iter += 2;
-		}
-		if (field_flags & 4) {
-			protocol_type = *iter++;
-			copy(iter, iter + 3, protocol_port);
-			iter += 3;
-		}
-		printf("FOUND: %02x | ", protocol_type);
-		if (field_flags & 8) {
-			destination = convertType(iter, 8);
-			iter += 8;
-		}
-		if (field_flags & 16) {
-			source_station_id = convertType(iter, 8);
-			iter += 8;
-		}
-
-		vector<uint8_t> temp(payload_size);
-		for (int i = 0; i < payload_size; i++)
-			temp[i] = *iter++;
-		payload = temp;
-	}
-
-	catch (exception& e) {
-		printf("FOUND BAD PACKET\n");
+	//this might be pia header padding
+	if (field_flags == 0xff) {
+		printf("RETURN (PPAD) ");
 		return -1;
 	}
+
+	//this might be pia message padding
+	if (field_flags == 0x00) {
+		printf("RETURN (MPAD) ");
+		return iter - data.begin();
+	}
+
+	//not enough room for a message and probably junk (?)
+	if (data.end() - 24 < iter) {	
+		printf("RETURN (EOF) ");
+		return -1;
+	}
+	
+	//set all message header values according to the field flags
+	if (field_flags & 1 && iter + 1 < data.end())
+		msg_flag = *iter++;
+	if (field_flags & 2 && iter + 2 < data.end()) {
+		payload_size = convertType(iter, 2);
+		iter += 2;
+	}
+	if (field_flags & 4 && iter + 4 < data.end()) {
+		protocol_type = *iter++;
+		copy(iter, iter + 3, protocol_port);
+		iter += 3;
+	}
+	if (field_flags & 8 && iter + 8 < data.end()) {
+		destination = convertType(iter, 8);
+		iter += 8;
+	}
+	if (field_flags & 16 && iter + 8 < data.end()) {
+		source_station_id = convertType(iter, 8);
+		iter += 8;
+	}
+
+	vector<uint8_t> temp(payload_size);
+	for (int i = 0; i < payload_size; i++) {
+		if (iter != data.end())
+			temp[i] = *iter++;
+	}
+	payload = temp;
+
+	printf("FOUND: %02x|%02x/%02x | ", field_flags, protocol_type, payload[0]);
 
 	return iter - data.begin();
 }

@@ -16,7 +16,7 @@ void Responder::setParser(Parser& parserIn) {
 bool Responder::getResp(vector<Packet>& out) {
 	
 	hasResp = false;
-	
+
 	for (int i = 0; i < parser->messageVector.size(); i++) {
 		
 		if (parser->messageVector[i].payload.size() < 1)
@@ -24,15 +24,18 @@ bool Responder::getResp(vector<Packet>& out) {
 		protocol = parser->messageVector[i].protocol_type;
 		msgType = parser->messageVector[i].payload[0];
 		
-
 		if (protocol == 0x7c) {
 			//exit(1);
 			if (msgType == 0x07) {
-				printf("FOUND 7c:07!!!!! %02x%02x", parser->messageVector[i].payload[2], parser->messageVector[i].payload[3]);
+				int offset = (uint16_t)parser->messageVector[i].payload[2] << 8 | parser->messageVector[i].payload[3];
+				if (offset > 0x160 && offset < 0x170) {
+					offset = parser->messageVector[i].payload_size - offset + 8;
+					printf("FOUND 7c:07!!!!! %02x%02x ", parser->messageVector[i].payload[offset], parser->messageVector[i].payload[offset + 1]);
+				}
 			}
 				
 		}
-
+		printf("\n");
 
 	}
 
