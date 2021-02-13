@@ -20,13 +20,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Responder* responder = &cookie->responder;
 
 	vector<Packet> outVector;
-
-	if (parser->onPacket(packet)) {
-		responder->setParser(*parser);
-		responder->setPokemonRaw(parser->dec);
-		//TODO: Add check pokemon method		
-	}
-
+	
 	EthLayer* eth = packet.getLayerOfType<EthLayer>();
 
 	if (!cookie->selfSwitchMac.isValid()) {
@@ -36,15 +30,25 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (eth->getDestMac() != MacAddress("ff:ff:ff:ff:ff:ff"))
 		eth->setDestMac(*cookie->otherSwitchMac);
 
-	//printf("{%s} -> {%s} | %s\n", eth->getSourceMac().toString().c_str(), eth->getDestMac().toString().c_str(), cookie->isSecondary ? "True" : "False");
-	if(cookie->isSecondary)
+	if (cookie->isSecondary)
 		packet.getLayerOfType<EthLayer>()->setSourceMac(cookie->output->getMacAddress());
 	else
 		packet.getLayerOfType<EthLayer>()->setSourceMac(dev->getMacAddress());
 
+	vector<uint8_t> packetData;
+	vector<uint8_t> out;
+
+	if (parser->onPacket(packet)) {
+		responder->setParser(*parser);
+		packetData = parser->dec;
+		responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
+		
+		parser->EncryptPia(packetData, &out, parser->recv_header);
+		packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
+	}
+
 	packet.computeCalculateFields();
 	cookie->output->sendPacket(&packet);
-	
 	
 	parser->resetAll();
 }

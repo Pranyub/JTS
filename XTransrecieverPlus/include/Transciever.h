@@ -17,8 +17,7 @@ public:
 		pcpp::MacAddress* otherSwitchMac;
 
 		Pokemon selfPokemon;
-		Pokemon* destPokemon;
-		Pokemon* injectPokemon;
+		Pokemon injectPokemon;
 
 		bool isSecondary;
 
