@@ -19,8 +19,6 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	Parser *parser = &cookie->parser;
 	Responder* responder = &cookie->responder;
 
-	
-
 	vector<Packet> outVector;
 
 	if (parser->onPacket(packet)) {

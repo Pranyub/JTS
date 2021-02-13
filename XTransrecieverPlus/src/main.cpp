@@ -24,6 +24,9 @@ int main(int argc, char* argv[])
 	tx1.cookie.otherSwitchMac = &tx2.cookie.selfSwitchMac;
 	tx2.cookie.otherSwitchMac = &tx1.cookie.selfSwitchMac;
 
+	tx1.cookie.destPokemon = &tx2.cookie.selfPokemon;
+	tx2.cookie.destPokemon = &tx1.cookie.selfPokemon;
+
 	tx1.Start();
 	tx2.Start();
 

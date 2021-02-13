@@ -2,6 +2,11 @@
 #include "PacketParser.h"
 #include "Responder.h"
 #include <PcapLiveDeviceList.h>
+
+
+
+
+
 class Tx {
 public:
 	struct Cookie {
@@ -10,6 +15,10 @@ public:
 		pcpp::PcapLiveDevice* output;
 		pcpp::MacAddress selfSwitchMac{"SOMETHING INVALID"};
 		pcpp::MacAddress* otherSwitchMac;
+
+		Pokemon selfPokemon;
+		Pokemon* destPokemon;
+		Pokemon* injectPokemon;
 
 		bool isSecondary;
 

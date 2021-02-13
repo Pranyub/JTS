@@ -13,27 +13,41 @@ void Responder::setParser(Parser& parserIn) {
 	station = Station(parser);
 }
 
-bool Responder::setPokemonRaw(vector<uint8_t> raw) {
+bool Responder::setPokemonRaw(std::vector<uint8_t>& raw, pcpp::MacAddress dest, Pokemon& original, Pokemon inject) {
 	if (raw.size() < 0x1af)
 		return false;
+
+	bool output = false;
+
 	for (int i = 0; i < raw.size(); i++) {
 	
 		if (raw[i] == 0xd8) {
 			if (raw[i + 1] == 0x02) {
 				printf("FOUND POKEMON: ");
-				for (int j = 0; j < 0x159; j++)
+				Pokemon found;
+				for (int j = 2; j < 0x159; j++) {
+					found.data[j - 2] = raw[j + i];
 					printf("%02x", raw[i + j]);
-				printf("\n");
-				printf("WHOLE PACKET: ");
-				for (int j = 0; j < raw.size(); j++)
-					printf("%02x", raw[j]);
-				printf("\n\n");
+				}
+
+				if (found.equals(inject)) {
+					for (int j = 2; j < 0x159; j++) {
+						raw[j + i] = original.data[i - 2];
+					}
+				}
+
+				else {
+					for (int j = 2; j < 0x159; j++) {
+						original.data[i - 2] = raw[j + i];
+						raw[j + i] = inject.data[i - 2];
+					}
+				}
+				output = true;
 			}
 		}
-		
 	}
 
-	return true;
+	return output;
 }
 
 bool Responder::getResp(vector<Packet>& out) {
