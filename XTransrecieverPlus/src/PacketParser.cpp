@@ -70,7 +70,6 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 
 	vector<uint8_t>::iterator iter = piaMsg.begin() + 5;
 	iter = recv_header.fill(iter);
-
 	//The encrypted packet without unencrypted header
 	vector<uint8_t> enc;
 	while (iter != piaMsg.end())
@@ -98,8 +97,7 @@ bool Parser::parsePia(std::vector<uint8_t> piaMsg) {
 			else
 				messageVector.push_back(recv_message);
 		}
-		printf("\n");
-		
+			
 		
 	}
 
@@ -126,8 +124,7 @@ std::vector<uint8_t> Parser::PIAHeader::set() {
 	out.push_back(connID);
 	std::vector<uint8_t> temp = NumToVector(packetID, 2);
 	out.insert(out.end(), temp.begin(), temp.end());
-	vector<uint8_t> nonceCounter = NumToVector(nonce, sizeof(nonce));
-	out.insert(out.end(), nonceCounter.begin(), nonceCounter.end());
+	out.insert(out.end(), headerNonce.begin(), headerNonce.end());
 	out.insert(out.end(), tag.begin(), tag.end());
 
 	return out;
@@ -142,19 +139,16 @@ int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 
 	//this might be pia header padding
 	if (field_flags == 0xff) {
-		printf("RETURN (PPAD) ");
 		return -1;
 	}
 
 	//this might be pia message padding
 	if (field_flags == 0x00) {
-		printf("RETURN (MPAD) ");
 		return -2;
 	}
 
 	//not enough room for a message and probably junk (?)
 	if (data.end() - 24 < iter) {	
-		printf("RETURN (EOF) ");
 		return -1;
 	}
 	
@@ -189,8 +183,6 @@ int Parser::Message::setMessage(vector<uint8_t> data, int offset) {
 	//safety check (is it necessary?)
 	if (payload.size() == 0)
 		payload.push_back(0xff);
-
-	printf("FOUND: {%02x|%d|%02x/%02x} | ", field_flags, payload_size, protocol_type, payload[0]);
 
 	return iter - data.begin();
 }
@@ -459,8 +451,7 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	while (decrypted.size() % 16 != 0)
 		decrypted.push_back(0xff); //add padding
 
-	header_self.nonce += 1;
-	vector<uint8_t> nonceCounter = NumToVector(header_self.nonce, sizeof(header_self.nonce));
+	//vector<uint8_t> nonceCounter = NumToVector(header_self.nonce, sizeof(header_self.nonce));
 
 	//Set the encryption nonce
 	vector<uint8_t> nonce;
@@ -471,8 +462,7 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	nonce.push_back(header_self.connID);
 
 	for (int i=1; i < 8; i++)
-		nonce.push_back(nonceCounter[i]);
-
+		nonce.push_back(header_self.headerNonce[i]);
 
 	encrypted->resize(decrypted.size());
 	int enc_len;
