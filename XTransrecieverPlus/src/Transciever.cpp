@@ -46,9 +46,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 			
 			if (parser->EncryptPia(packetData, &out, parser->recv_header)) {
 				
-				if (out != *parser->raw && !isSet) {
-				}
-				else
+				if (out == *parser->raw || isSet) {
 					packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
 				/*
 				if (cookie->isSecondary) {
