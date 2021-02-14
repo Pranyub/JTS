@@ -30,7 +30,7 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>& raw, pcpp::MacAddress dest, 
 						found.data[j - 2] = raw[j + i];
 						printf("%02x", raw[i + j]);
 					}
-
+				}
 				if (found.equals(inject)) {
 					for (int j = 2; j < 0x159; j++) {
 						raw[j + i] = original.data[i - 2];

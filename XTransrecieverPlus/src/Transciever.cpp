@@ -38,34 +38,17 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 	vector<uint8_t> out;
 
 	if (parser->onPacket(packet)) {
-		responder->setParser(*parser);
 		packetData = parser->dec;
-		bool isSet = responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
+		//bool isSet = responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
 		if (parser->raw->at(0) != BROWSE_REPLY && parser->raw->at(0) != BROWSE_REQUEST) {
 
 			if (parser->EncryptPia(packetData, &out, parser->recv_header)) {
 
-				if (out == *parser->raw || isSet) {
+				if (out == *parser->raw) {
 					packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
-					/*
-					if (cookie->isSecondary) {
-						printf("\nBEFORE: ");
-						for (int i = 0; i < parser->raw->size(); i++)
-							printf("%02x", parser->raw->at(i));
-						printf("\nNONCE: ");
-						for (int i : parser->recv_header.headerNonce)
-							printf("%02x", i);
-
-						printf("\nAFTER: ");
-						for (int i : out)
-							printf("%02x", i);
-						printf("\n\n");
-					}
-					*/
-
-
-
 				}
+				else
+					printf("MISMATCH\n");
 			}
 			else
 				printf("ENC FAILED\n");
