@@ -44,11 +44,16 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 
 			if (parser->EncryptPia(packetData, &out, parser->recv_header)) {
 
-				if (out == *parser->raw) {
-					packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
-				}
-				else
+				packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
+
+				if (out != *parser->raw) {
+					
+
 					printf("MISMATCH\n");
+					for (int i : parser->dec)
+						printf("%02x", i);
+					printf("\n\n");
+				}
 			}
 			else
 				printf("ENC FAILED\n");
