@@ -12,8 +12,7 @@ using namespace pcpp;
 using namespace std;
 
 
-static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
-{
+static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 	Tx::Cookie* cookie = (Tx::Cookie*)c;
 	Packet packet = Packet(rawPacket);
 	Parser *parser = &cookie->parser;
@@ -41,10 +40,36 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c)
 	if (parser->onPacket(packet)) {
 		responder->setParser(*parser);
 		packetData = parser->dec;
-		responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
-		
-		parser->EncryptPia(packetData, &out, parser->recv_header);
-		packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
+		bool isSet = responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
+		if (parser->raw->at(0) != BROWSE_REPLY && parser->raw->at(0) != BROWSE_REQUEST) {
+
+			if (parser->EncryptPia(packetData, &out, parser->recv_header)) {
+
+				if (out == *parser->raw || isSet) {
+					packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
+					/*
+					if (cookie->isSecondary) {
+						printf("\nBEFORE: ");
+						for (int i = 0; i < parser->raw->size(); i++)
+							printf("%02x", parser->raw->at(i));
+						printf("\nNONCE: ");
+						for (int i : parser->recv_header.headerNonce)
+							printf("%02x", i);
+
+						printf("\nAFTER: ");
+						for (int i : out)
+							printf("%02x", i);
+						printf("\n\n");
+					}
+					*/
+
+
+
+				}
+			}
+			else
+				printf("ENC FAILED\n");
+		}
 	}
 
 	packet.computeCalculateFields();
@@ -73,7 +98,7 @@ Tx::Tx(const std::string interfaceIPAddr, const std::string switchIPAddr, const 
 		printf("Cannot open device\n");
 		exit(1);
 	}
-	string filter = searchfilter;
+	std::string filter = searchfilter;
 	//This is to prevent feedback; only search for switchIP on primary interface, and ignore switchIP on secondary.
 	if (secondary)
 		filter.append(" and (not (ip and src net " + switchIPAddr + "))");
