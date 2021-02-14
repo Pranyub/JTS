@@ -8,7 +8,7 @@ enum STAGE {
 };
 
 struct Pokemon {
-	std::array<uint8_t, 0x157> data;
+	std::array<uint8_t, 0x158> data;
 	pcpp::MacAddress source;
 	bool equals(Pokemon other) {
 		return data == other.data;
