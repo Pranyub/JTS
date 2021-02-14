@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 	tx1.cookie.otherSwitchMac = &tx2.cookie.selfSwitchMac;
 	tx2.cookie.otherSwitchMac = &tx1.cookie.selfSwitchMac;
 
-	ifstream injectFile("inject.ek8", ios::out | ios::binary);
+	ifstream injectFile("./inject.ek8", ios::out | ios::binary);
 	if (!injectFile.is_open()) {
 		printf("Unable to find 'inject.ek8'.\n");
 		exit(1);
