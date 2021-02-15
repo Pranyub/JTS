@@ -24,6 +24,9 @@ int main(int argc, char* argv[])
 	tx1.cookie.otherSwitchMac = &tx2.cookie.selfSwitchMac;
 	tx2.cookie.otherSwitchMac = &tx1.cookie.selfSwitchMac;
 
+	std::array<uint8_t, 16> sessionKey;
+	tx1.cookie.parser.linkSessionKey(&sessionKey);
+	tx2.cookie.parser.linkSessionKey(&sessionKey);
 	ifstream injectFile("./inject.ek8", ios::out | ios::binary);
 	if (!injectFile.is_open()) {
 		printf("Unable to find 'inject.ek8'.\n");

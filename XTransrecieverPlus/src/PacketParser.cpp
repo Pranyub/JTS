@@ -388,6 +388,11 @@ bool Parser::parseBrowseReply() {
 	return true;
 }
 
+void Parser::linkSessionKey(std::array<uint8_t, 16>* key) {
+	delete(sessionKey);
+	sessionKey = key;
+}
+
 void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the given array and sets session key to it
 {
 	
@@ -399,7 +404,7 @@ void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the give
 
 	//set actual sessionKey equal to first 16 bytes of the full key.
 	for (int i = 0; i < 16; i++) {
-		sessionKey[i] = session_key_ext[i];
+		sessionKey->at(i) = session_key_ext[i];
 	}
 	
 	decryptable = true;
@@ -430,7 +435,7 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	//Start decryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), nonce);
+	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey->data(), nonce);
 
 	if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
 		printf("DECRYPT UPDATE ERROR\n");
@@ -476,7 +481,7 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	//Start encryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey.data(), nonce.data());
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey->data(), nonce.data());
 	EVP_EncryptUpdate(ctx, encrypted->data(), &enc_len, decrypted.data(), decrypted.size());
 
 
