@@ -410,20 +410,24 @@ void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the give
 
 	HMAC(EVP_sha256(), GAME_KEY, 16, mod_param, 32, session_key_ext, nullptr);
 
-	//set fallback key to old session key
-	if (*fallbackSessionKey != *sessionKey) {
-		for (int i = 0; i < 16; i++)
-			fallbackSessionKey->at(i) = sessionKey->at(i); 
-	}
+	std::array<uint8_t, 16> oldKey;
+
+	
 
 
 	//set actual sessionKey equal to first 16 bytes of the full key.
 	for (int i = 0; i < 16; i++) {
-		
+		oldKey.at(i) = sessionKey->at(i);
 		sessionKey->at(i) = session_key_ext[i];
 	}
 	
-	
+	//set fallback key to old session key
+	if (oldKey != *sessionKey) {
+		for (int i = 0; i < 16; i++)
+			fallbackSessionKey->at(i) = oldKey.at(i);
+	}
+	else
+		printf("SESSION KEYS MATCH!\n");
 
 
 
@@ -462,25 +466,34 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	
 
 	//for some reason this returns 0 even if decryption was successful?
-	if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
-		EVP_CIPHER_CTX_free(ctx);
-		EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-		EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nonce);
-		EVP_DecryptInit_ex(ctx, nullptr, nullptr, fallbackSessionKey->data(), nullptr);
-		if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
-			printf("DECRYPT UPDATE ERROR\n");
-		if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
-			EVP_CIPHER_CTX_free(ctx);
-			return false;
-		}
+	EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len);
 
+	array<uint8_t, 16> tag;
+
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag.data());
+
+	if (tag != recv_header.tag) {
+	//decryption was unsuccessful; try with the fallback session key;
+	EVP_DecryptInit_ex(ctx, nullptr, nullptr, fallbackSessionKey->data(), nullptr);
+	if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
+		printf("DECRYPT UPDATE ERROR\n");
+	EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len);
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag.data());
+
+	//if it still failed, then return false
+	if (tag != recv_header.tag) {
 		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
-	else
-		printf("DECRYPT SUCCESS\n");
-	
-	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, recv_header.tag.data());
+
+	//otherwise swap the two keys
+	else {
+		array<uint8_t, 16>* temp = sessionKey;
+		sessionKey = fallbackSessionKey;
+		fallbackSessionKey = temp;
+	}
+	}
+
 
 	EVP_CIPHER_CTX_free(ctx);
 
