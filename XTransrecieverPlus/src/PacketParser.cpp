@@ -53,7 +53,13 @@ bool Parser::onPacket(Packet packet) {
 		break;
 	case BROWSE_REPLY:
 		parseBrowseReply(); //Used to get session key (used for encryption/decryption)
-		printf("Browse Reply from %x\n", udpInfo.srcIP);
+		printf("Browse Reply from %x | session key: ", udpInfo.srcIP);
+		for (int i : *sessionKey)
+			printf("%02x", i);
+		printf(" | ");
+		for (int i : *fallbackSessionKey)
+			printf("%02x", i);
+		printf("\n");
 		break;
 	}
 	
@@ -388,9 +394,11 @@ bool Parser::parseBrowseReply() {
 	return true;
 }
 
-void Parser::linkSessionKey(std::array<uint8_t, 16>* key) {
+void Parser::linkSessionKeys(std::array<uint8_t, 16>* key, std::array<uint8_t, 16>* fallback) {
 	delete(sessionKey);
+	delete(fallbackSessionKey);
 	sessionKey = key;
+	fallbackSessionKey = fallback;
 }
 
 void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the given array and sets session key to it
@@ -402,11 +410,23 @@ void Parser::setSessionKey(const uint8_t mod_param[]) //creates hash of the give
 
 	HMAC(EVP_sha256(), GAME_KEY, 16, mod_param, 32, session_key_ext, nullptr);
 
+	//set fallback key to old session key
+	if (*fallbackSessionKey != *sessionKey) {
+		for (int i = 0; i < 16; i++)
+			fallbackSessionKey->at(i) = sessionKey->at(i); 
+	}
+
+
 	//set actual sessionKey equal to first 16 bytes of the full key.
 	for (int i = 0; i < 16; i++) {
+		
 		sessionKey->at(i) = session_key_ext[i];
 	}
 	
+	
+
+
+
 	decryptable = true;
 }
 
@@ -434,8 +454,8 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	
 	//Start decryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey->data(), nonce);
+	EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nonce);
+	EVP_DecryptInit_ex(ctx, nullptr, nullptr, sessionKey->data(), nullptr);
 
 	if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
 		printf("DECRYPT UPDATE ERROR\n");
@@ -443,10 +463,22 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 
 	//for some reason this returns 0 even if decryption was successful?
 	if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
-		printf("DECRYPT FINAL ERROR\n");
+		EVP_CIPHER_CTX_free(ctx);
+		EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+		EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nonce);
+		EVP_DecryptInit_ex(ctx, nullptr, nullptr, fallbackSessionKey->data(), nullptr);
+		if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
+			printf("DECRYPT UPDATE ERROR\n");
+		if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
+			EVP_CIPHER_CTX_free(ctx);
+			return false;
+		}
+
 		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
+	else
+		printf("DECRYPT SUCCESS\n");
 	
 	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, recv_header.tag.data());
 

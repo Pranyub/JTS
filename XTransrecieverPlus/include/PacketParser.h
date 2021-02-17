@@ -115,8 +115,8 @@ public:
 	bool decryptable = false; //can't decrypt unless session key is set via setSessionKey()
 	std::array<uint8_t, 4> sessionID;
 	std::array<uint8_t, 16>* sessionKey = new std::array<uint8_t, 16>; //key used for decryption
-
-	void linkSessionKey(std::array<uint8_t, 16>* key);
+	std::array<uint8_t, 16>* fallbackSessionKey = new std::array<uint8_t, 16>; //fallback key to try in case normal key doesnt work
+	void linkSessionKeys( std::array<uint8_t, 16>* key, std::array<uint8_t, 16>* fallback);
 
 
 	//Start parsing a given packet - creates a PiaHeader & PiaMessages

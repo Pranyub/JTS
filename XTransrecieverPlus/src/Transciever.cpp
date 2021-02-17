@@ -46,11 +46,20 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 
 				packet.getLayerOfType<PayloadLayer>()->setPayload(out.data(), out.size());
 
-				if (out != *parser->raw) {
+				if (out != *parser->raw && !cookie->isSecondary) {
 					
 
 					printf("MISMATCH\n");
 					for (int i : parser->dec)
+						printf("%02x", i);
+					printf("\n\n");
+					for (int i : *parser->raw)
+						printf("%02x", i);
+					printf("\n\n");
+					for (int i : *parser->sessionKey)
+						printf("%02x", i);
+					printf("\n");
+					for (int i : *parser->fallbackSessionKey)
 						printf("%02x", i);
 					printf("\n\n");
 				}
