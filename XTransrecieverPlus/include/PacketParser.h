@@ -116,6 +116,9 @@ public:
 	std::array<uint8_t, 4> sessionID;
 	std::array<uint8_t, 16>* sessionKey = new std::array<uint8_t, 16>; //key used for decryption
 	std::array<uint8_t, 16>* fallbackSessionKey = new std::array<uint8_t, 16>; //fallback key to try in case normal key doesnt work
+
+	std::array<uint8_t, 16> encryptionKey; //key used to reencrypt packet
+
 	void linkSessionKeys( std::array<uint8_t, 16>* key, std::array<uint8_t, 16>* fallback);
 
 

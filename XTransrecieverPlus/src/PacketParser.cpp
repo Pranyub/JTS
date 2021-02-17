@@ -487,14 +487,14 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 			return false;
 		}
 
-	//otherwise swap the two keys
-	else {
-		array<uint8_t, 16>* temp = sessionKey;
-		sessionKey = fallbackSessionKey;
-		fallbackSessionKey = temp;
+		//otherwise swap the two keys
+		else {
+			array<uint8_t, 16>* temp = sessionKey;
+			sessionKey = fallbackSessionKey;
+			fallbackSessionKey = temp;
+		}
 	}
-	}
-
+	encryptionKey = *sessionKey;
 
 	EVP_CIPHER_CTX_free(ctx);
 
@@ -527,7 +527,7 @@ bool Parser::EncryptPia(std::vector<uint8_t> decrypted, std::vector<uint8_t>* en
 	//Start encryption
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nullptr);
-	EVP_EncryptInit_ex(ctx, nullptr, nullptr, sessionKey->data(), nonce.data());
+	EVP_EncryptInit_ex(ctx, nullptr, nullptr, encryptionKey.data(), nonce.data());
 	EVP_EncryptUpdate(ctx, encrypted->data(), &enc_len, decrypted.data(), decrypted.size());
 
 
