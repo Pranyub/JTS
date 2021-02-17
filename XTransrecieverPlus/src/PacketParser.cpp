@@ -460,17 +460,12 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 	if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
 		printf("DECRYPT UPDATE ERROR\n");
 	
+	//check if tag matches
+	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, recv_header.tag.data());
 
-	//for some reason this returns 0 even if decryption was successful?
-	EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len);
-
-	array<uint8_t, 16> tag;
-
-	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag.data());
-
-	if (tag != recv_header.tag) {
+	if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
 	//decryption was unsuccessful; try with the fallback session key;
-	
+
 		EVP_CIPHER_CTX_free(ctx);
 		EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 		EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), nullptr, nullptr, nonce);
@@ -478,11 +473,13 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 
 		if (EVP_DecryptUpdate(ctx, decrypted->data(), &decrypted_len, encrypted.data(), encrypted.size()) != 1)
 			printf("DECRYPT UPDATE ERROR\n");
-		EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len);
-		EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag.data());
-
+		
+		EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, recv_header.tag.data());
+		
+	
 		//if it still failed, then return false
-		if (tag != recv_header.tag) {
+		if (EVP_DecryptFinal_ex(ctx, decrypted->data() + decrypted_len, &decrypted_len) != 1) {
+			
 			EVP_CIPHER_CTX_free(ctx);
 			return false;
 		}
@@ -494,6 +491,7 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 			fallbackSessionKey = temp;
 		}
 	}
+
 	encryptionKey = *sessionKey;
 
 	EVP_CIPHER_CTX_free(ctx);

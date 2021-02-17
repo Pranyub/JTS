@@ -50,14 +50,16 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 					
 					
 					printf("MISMATCH\n");
-					for (int i : out)
+					for (int i : parser->dec)
 						printf("%02x", i);
 					printf("\n\n");
-					for (int i : *parser->sessionKey)
+					for (int i : *parser->raw)
 						printf("%02x", i);
-					printf("\n");
-					for (int i : *parser->fallbackSessionKey)
+	
+					printf("\n\n");
+					for (int i : parser->recv_header.tag)
 						printf("%02x", i);
+
 					printf("\n\n");
 					
 				}
