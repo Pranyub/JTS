@@ -48,12 +48,9 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 
 				if (out != *parser->raw && !cookie->isSecondary) {
 					
-
+					
 					printf("MISMATCH\n");
-					for (int i : parser->dec)
-						printf("%02x", i);
-					printf("\n\n");
-					for (int i : *parser->raw)
+					for (int i : out)
 						printf("%02x", i);
 					printf("\n\n");
 					for (int i : *parser->sessionKey)
@@ -62,10 +59,9 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 					for (int i : *parser->fallbackSessionKey)
 						printf("%02x", i);
 					printf("\n\n");
+					
 				}
 			}
-			else
-				printf("ENC FAILED\n");
 		}
 	}
 
