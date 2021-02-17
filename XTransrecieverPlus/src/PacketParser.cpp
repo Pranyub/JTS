@@ -7,6 +7,7 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <openssl/conf.h>
 #include <openssl/hmac.h>
 #include "Config.h"
 using namespace pcpp;
@@ -494,8 +495,8 @@ bool Parser::DecryptPia(const std::vector<uint8_t> encrypted, std::vector<uint8_
 
 	encryptionKey = *sessionKey;
 
-	EVP_CIPHER_CTX_free(ctx);
-
+	//This causes crash?
+	//EVP_CIPHER_CTX_free(ctx);
 	return true;
 
 }

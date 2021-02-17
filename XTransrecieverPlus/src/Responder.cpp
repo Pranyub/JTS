@@ -14,37 +14,37 @@ void Responder::setParser(Parser& parserIn) {
 }
 
 bool Responder::setPokemonRaw(std::vector<uint8_t>& raw, pcpp::MacAddress dest, Pokemon& original, Pokemon inject) {
-	if (raw.size() < 0x1af)
+	if (raw.size() < 400)
 		return false;
 
 	bool output = false;
 
-	for (int i = 0; i < raw.size(); i++) {
+	for (int i = 0; i < raw.size() - 1; i++) {
 	
 		if (raw[i] == 0xd8) {
-			if (raw[i + 1] == 0x02) {
+			if (raw[i + 1] == 0x02 && raw.size() > 0x160 + i) {
 				printf("FOUND POKEMON: ");
+				
 				Pokemon found;
-				if (raw.size() > 0x160 + i) {
-					for (int j = 2; j < 0x160; j++) {
-						found.data[j - 2] = raw[j + i];
-						printf("%02x", raw[i + j]);
-					}
-
-					if (found.equals(inject)) {
-						for (int j = 2; j < 0x160; j++) {
-							raw[j + i] = original.data[i - 2];
-						}
-					}
-
-					else {
-						for (int j = 2; j < 0x160; j++) {
-							original.data[i - 2] = raw[j + i];
-							raw[j + i] = inject.data[i - 2];
-						}
-					}
-					output = true;
+				for (int j = 2; j < 0x159; j++) {
+					found.data[j - 2] = raw[j + i];
+					printf("%02x", raw[i + j]);
 				}
+
+				if (found.equals(inject)) {
+					for (int j = 2; j < 0x159; j++) {
+						raw[j + i] = original.data[i - 2];
+					}
+				}
+
+				else {
+					for (int j = 2; j < 0x159; j++) {
+						original.data[i - 2] = raw[j + i];
+						raw[j + i] = inject.data[i - 2];
+					}
+				}
+
+				output = true;
 			}
 		}
 	}
