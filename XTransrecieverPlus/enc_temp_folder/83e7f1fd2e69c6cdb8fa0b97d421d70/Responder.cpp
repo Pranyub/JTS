@@ -43,8 +43,8 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, 
 				}
 				else {
 					for (int j = 2; j < 0x159; j++) {
-						original->data[j - 2] = raw->at(i + j);
-						raw->at(i + j) = inject->data[j - 2];
+						original->data[i - 2] = raw->at(i + j);
+						raw->at(i + j) = inject->data[j-2];
 					}
 				}
 
