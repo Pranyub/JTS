@@ -42,8 +42,9 @@ int main(int argc, char* argv[])
 	}
 	printf("\n");
 
-	tx1.cookie.injectPokemon = injectPokemon;
-	tx2.cookie.injectPokemon = injectPokemon;
+	tx1.cookie.injectPokemon.set(injectPokemon);
+	tx2.cookie.injectPokemon.set(injectPokemon);
+
 
 	tx1.Start();
 	tx2.Start();

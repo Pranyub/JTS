@@ -13,6 +13,10 @@ struct Pokemon {
 	bool equals(Pokemon other) {
 		return data == other.data;
 	}
+
+	void set(Pokemon other) {
+		data = other.data;
+	}
 };
 
 class Responder {

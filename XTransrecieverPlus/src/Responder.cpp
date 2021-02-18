@@ -14,6 +14,7 @@ void Responder::setParser(Parser& parserIn) {
 }
 
 bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, Pokemon* original, Pokemon* inject) {
+	
 	if (raw->size() < 400)
 		return false;
 
@@ -25,12 +26,14 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, 
 			if (raw->at(i+1) == 0x02 && raw->size() > 0x160 + i) {
 				printf("FOUND POKEMON: ");
 				
+				array<uint8_t, 344> data = inject->data;
+
 				Pokemon found;
 				for (int j = 2; j < 0x159; j++) {
 					found.data[j - 2] = raw->at(j + i);
 					
 				}
-				for (int i : *raw)
+				for (int i : data)
 					printf("%02x", i);
 				printf("\n");
 				if (found.equals(*inject)) {
@@ -42,8 +45,8 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, 
 				else {
 					for (int j = 2; j < 0x159; j++) {
 						original->data[i - 2] = raw->at(i + j);
-						raw->at(i + j) = inject->data[i - 2];
-						printf("%02x", raw->at(i + j));
+						raw->at(i + j) = data[i-2];
+						printf("%02x", inject->data.at(i-2));
 					}
 				}
 				printf("\n");

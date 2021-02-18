@@ -17,6 +17,7 @@ public:
 		pcpp::MacAddress* otherSwitchMac;
 
 		Pokemon selfPokemon;
+		std::array<uint8_t, 344> pkmnTest;
 		Pokemon injectPokemon;
 
 		bool isSecondary;
