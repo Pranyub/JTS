@@ -40,7 +40,7 @@ static void onPacket(RawPacket* rawPacket, PcapLiveDevice* dev, void* c) {
 	if (parser->onPacket(packet)) {
 		packetData = parser->dec;
 		if (parser->raw->at(0) != BROWSE_REPLY && parser->raw->at(0) != BROWSE_REQUEST) {
-			bool isSet = responder->setPokemonRaw(packetData, cookie->selfSwitchMac, cookie->selfPokemon, cookie->injectPokemon);
+			bool isSet = responder->setPokemonRaw(&packetData, cookie->selfSwitchMac, &cookie->selfPokemon, &cookie->injectPokemon);
 
 
 			if (parser->EncryptPia(packetData, &out, parser->recv_header)) {
