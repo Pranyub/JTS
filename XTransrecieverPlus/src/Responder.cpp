@@ -24,7 +24,7 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, 
 	
 		if (raw->at(i) == 0xd8) {
 			if (raw->at(i+1) == 0x02 && raw->size() > 0x160 + i) {
-				printf("FOUND POKEMON: ");
+				printf("FOUND POKEMON! ");
 				
 				array<uint8_t, 344> data = inject->data;
 
@@ -33,26 +33,18 @@ bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, 
 					found.data[j - 2] = raw->at(j + i);
 					
 				}
-				for (int i : data)
-					printf("%02x", i);
-				printf("\n");
+
 				if (found.equals(*inject)) {
-					printf("HERE!\n");
 					for (int j = 2; j < 0x159; j++) {
-						raw->at(i + j) = original->data[i - 2];
+						raw->at(i + j) = original->data[j - 2];
 					}
 				}
 				else {
 					for (int j = 2; j < 0x159; j++) {
 						original->data[i - 2] = raw->at(i + j);
-						raw->at(i + j) = data[i-2];
-						printf("%02x", inject->data.at(i-2));
+						raw->at(i + j) = inject->data[j-2];
 					}
 				}
-				printf("\n");
-				for (int i : *raw)
-					printf("%02x", i);
-				printf("\n");
 				output = true;
 			}
 		}
