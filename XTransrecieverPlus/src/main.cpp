@@ -14,15 +14,15 @@ int main(int argc, char* argv[])
 
 	//JANK TRADING SYSTEM
 
-	if (argc != 3) {
-		printf("INCORRECT ARGUMENTS: [Interface1 IP] [Interface2 IP] [INJECT FILE]\n");
+	if (argc != 4) {
+		printf("Usage: XTransrecieverPlus interface1 interface2 injectFile\n");
 		exit(1);
 	}
 
-	string switchIP = argv[0];
+	string switchIP = argv[1];
 	string interfaceIPAddr1 = switchIP;
-	string interfaceIPAddr2 = argv[1];
-	ifstream injectFile(argv[2], ios::out | ios::binary);
+	string interfaceIPAddr2 = argv[2];
+	ifstream injectFile(argv[3], ios::out | ios::binary);
 
 
 	Tx tx1(interfaceIPAddr1, switchIP, cfg::searchfilter, false);
