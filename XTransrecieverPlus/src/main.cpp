@@ -14,9 +14,19 @@ int main(int argc, char* argv[])
 
 	//JANK TRADING SYSTEM
 
+	if (argc != 3) {
+		printf("INCORRECT ARGUMENTS: [Interface1 IP] [Interface2 IP] [INJECT FILE]\n");
+		exit(1);
+	}
 
-	Tx tx1(cfg::interfaceIPAddr1, cfg::switchIP, cfg::searchfilter, false);
-	Tx tx2(cfg::interfaceIPAddr2, cfg::switchIP, cfg::searchfilter, true);
+	string switchIP = argv[0];
+	string interfaceIPAddr1 = switchIP;
+	string interfaceIPAddr2 = argv[1];
+	ifstream injectFile(argv[2], ios::out | ios::binary);
+
+
+	Tx tx1(interfaceIPAddr1, switchIP, cfg::searchfilter, false);
+	Tx tx2(interfaceIPAddr2, switchIP, cfg::searchfilter, true);
 	
 	tx1.cookie.output = tx2.dev;
 	tx2.cookie.output = tx1.dev;
@@ -28,9 +38,9 @@ int main(int argc, char* argv[])
 	std::array<uint8_t, 16> fallbackKey;
 	tx1.cookie.parser.linkSessionKeys(&sessionKey, &fallbackKey);
 	tx2.cookie.parser.linkSessionKeys(&sessionKey, &fallbackKey);
-	ifstream injectFile("./inject.ek8", ios::out | ios::binary);
+	
 	if (!injectFile.is_open()) {
-		printf("Unable to find 'inject.ek8'.\n");
+		printf("Unable to find file '%s'.\n", argv[2]);
 		exit(1);
 	}
 
