@@ -19,9 +19,10 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	string switchIP = argv[1];
-	string interfaceIPAddr1 = switchIP;
+	
+	string interfaceIPAddr1 = argv[1];
 	string interfaceIPAddr2 = argv[2];
+	string switchIP = argv[2];
 	ifstream injectFile(argv[3], ios::out | ios::binary);
 
 
@@ -43,7 +44,7 @@ int main(int argc, char* argv[])
 		printf("Unable to find file '%s'.\n", argv[2]);
 		exit(1);
 	}
-
+	
 	Pokemon injectPokemon;
 	printf("INJECT POKEMON: ");
 	for (int i = 0; i < injectPokemon.data.size(); i++) {
