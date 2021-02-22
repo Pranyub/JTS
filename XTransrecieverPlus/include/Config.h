@@ -5,8 +5,4 @@
 namespace cfg {
 
 	const std::string searchfilter = "((src or dst portrange 49151-49156) or (src or dst port 30000)) and (udp)";
-	const std::string interfaceIPAddr2 = "10.0.0.61"; //Your computer local IP addr
-	const std::string interfaceIPAddr1 = "10.0.0.125"; //Your computer local IP addr (Same interface as target switch)
-	const std::string switchIP = "10.0.0.61";
-	
 };
