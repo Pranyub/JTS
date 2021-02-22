@@ -7,7 +7,12 @@ Requires PcapPlusPlus and OpenSSL libraries.
 
 ## Usage
 
-Coming Soon
+The usage is moderately complicated (hence the name 'Jank'), but should become simpler with future releases.
+
+### Requirements:
+- [Npcap](https://nmap.org/npcap/#download)
+- Two interfaces on different networks (e.g. an Ethernet connection & a Wi-Fi connection). An internet connection is not required.
+- A .ek8 file to inject. This can be created with [PKHex](https://projectpokemon.org/home/files/file/1-pkhex/)
 
 ## Build Instructions
 
