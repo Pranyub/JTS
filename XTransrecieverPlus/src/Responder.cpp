@@ -13,6 +13,8 @@ void Responder::setParser(Parser& parserIn) {
 	station = Station(parser);
 }
 
+void Responder::dumpPacket(std::vector<uint8_t>* raw) {}
+
 bool Responder::setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress dest, Pokemon* original, Pokemon* inject) {
 	
 	if (raw->size() < 400)

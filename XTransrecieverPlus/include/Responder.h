@@ -23,6 +23,8 @@ class Responder {
 public: 
 	void setParser(Parser& parserIn);
 
+	void dumpPacket(std::vector<uint8_t>* raw);
+
 	//this is for proof of concept only. will be changed in the future to actually use a parsed packet.
 	bool setPokemonRaw(std::vector<uint8_t>* raw, pcpp::MacAddress source, Pokemon* original, Pokemon* inject);
 
