@@ -19,7 +19,7 @@ JTS must be executed from the command line. Use ``` ./XtransrecieverPlus [MAC1] 
 - Two interfaces on different networks (e.g. an Ethernet connection & a Wi-Fi connection). An internet connection is not required.
 - A .ek8 file to inject. This can be created with [PKHex](https://projectpokemon.org/home/files/file/1-pkhex/)
 - You must specify device MAC Addresses, as JTS doesn't currently utilize ARP Spoofing (future implementation planned)
-- 
+
 ## Build Instructions
 
 Coming Soon
