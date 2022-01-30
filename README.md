@@ -1,6 +1,8 @@
 # JTS (Jank Trading System)
 
 A (WIP) Gen 8 PokeGen that uses the in-game LAN Trading System based on XTranscieverPlus.
+JTS is a man-in-the-middle attack on the Nintendo Switch that works by intercepting packets on-the-fly between two devices and injecting custom data.
+
 Requires 2 Switches / copies of Pokemon Sword or Shield to function. For single player support, look to XTranscieverPlus (also WIP)
 
 Support for Pokemon BdSp / Legends Arceus coming soon
